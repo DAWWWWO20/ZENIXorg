@@ -2,11 +2,14 @@
 // ==========================================
 // ZENIX CONFIG
 // ==========================================
+
 const API_URL =
     window.location.hostname === "localhost" ||
     window.location.hostname === "127.0.0.1"
         ? "http://localhost:3000"
         : "https://zenixorg.onrender.com";
+
+
 const robot = document.getElementById("robot");
 const mouth = document.querySelector(".robot-mouth");
 
@@ -212,18 +215,18 @@ function updateAuthArea() {
                 <button
                     class="logout-button"
                     onclick="logoutUser()"
-                    title="Ելք"
-                    aria-label="Ելք"
+                    title="ФµХ¬Ц„"
+                    aria-label="ФµХ¬Ц„"
                     type="button"
                 >
-                    ↪
+                    в†Є
                 </button>
             </div>
         `;
     } else {
         authArea.innerHTML = `
             <a href="register.html" class="auth-link">
-                Մուտք / Գրանցում
+                Х„ХёЦ‚ХїЦ„ / ФіЦЂХЎХ¶ЦЃХёЦ‚Хґ
             </a>
         `;
     }
@@ -269,12 +272,12 @@ function setAuthLoading(button, loading, originalText) {
 
     if (textElement) {
         textElement.textContent = loading
-            ? "Խնդրում եմ սպասիր..."
+            ? "ФЅХ¶Х¤ЦЂХёЦ‚Хґ ХҐХґ ХЅХєХЎХЅХ«ЦЂ..."
             : originalText;
     }
 }
 async function authRequest(endpoint, payload) {
-    const response = await fetch(API_BASE + endpoint, {
+    const response = await fetch(API_URL + endpoint, {
         method: "POST",
         headers: {
             "Content-Type": "application/json"
@@ -287,24 +290,24 @@ async function authRequest(endpoint, payload) {
     try {
         data = await response.json();
     } catch {
-        throw new Error("Սերվերը սխալ պատասխան է վերադարձրել։");
+        throw new Error("ХЌХҐЦЂХѕХҐЦЂХЁ ХЅХ­ХЎХ¬ ХєХЎХїХЎХЅХ­ХЎХ¶ Х§ ХѕХҐЦЂХЎХ¤ХЎЦЂХ±ЦЂХҐХ¬Ц‰");
     }
 
     if (!response.ok || !data.success) {
         const errors = {
-            ALL_FIELDS_REQUIRED: "Լրացրու բոլոր դաշտերը։",
-            INVALID_NAME: "Անունը պետք է լինի 2-50 նիշ։",
-            INVALID_EMAIL: "Էլեկտրոնային փոստը ճիշտ չէ։",
-            INVALID_PASSWORD: "Գաղտնաբառը պետք է լինի առնվազն 8 նիշ։",
-            EMAIL_ALREADY_REGISTERED: "Այս էլեկտրոնային փոստով արդեն գրանցվել ես։",
-            EMAIL_AND_PASSWORD_REQUIRED: "Լրացրու էլեկտրոնային փոստն ու գաղտնաբառը։",
-            INVALID_CREDENTIALS: "Էլեկտրոնային փոստը կամ գաղտնաբառը սխալ է։",
-            REGISTRATION_FAILED: "Գրանցումը չհաջողվեց։",
-            LOGIN_FAILED: "Մուտքը չհաջողվեց։"
+            ALL_FIELDS_REQUIRED: "ФјЦЂХЎЦЃЦЂХёЦ‚ ХўХёХ¬ХёЦЂ Х¤ХЎХ·ХїХҐЦЂХЁЦ‰",
+            INVALID_NAME: "Ф±Х¶ХёЦ‚Х¶ХЁ ХєХҐХїЦ„ Х§ Х¬Х«Х¶Х« 2-50 Х¶Х«Х·Ц‰",
+            INVALID_EMAIL: "Ф·Х¬ХҐХЇХїЦЂХёХ¶ХЎХµХ«Х¶ ЦѓХёХЅХїХЁ ХіХ«Х·Хї Х№Х§Ц‰",
+            INVALID_PASSWORD: "ФіХЎХІХїХ¶ХЎХўХЎХјХЁ ХєХҐХїЦ„ Х§ Х¬Х«Х¶Х« ХЎХјХ¶ХѕХЎХ¦Х¶ 8 Х¶Х«Х·Ц‰",
+            EMAIL_ALREADY_REGISTERED: "Ф±ХµХЅ Х§Х¬ХҐХЇХїЦЂХёХ¶ХЎХµХ«Х¶ ЦѓХёХЅХїХёХѕ ХЎЦЂХ¤ХҐХ¶ ХЈЦЂХЎХ¶ЦЃХѕХҐХ¬ ХҐХЅЦ‰",
+            EMAIL_AND_PASSWORD_REQUIRED: "ФјЦЂХЎЦЃЦЂХёЦ‚ Х§Х¬ХҐХЇХїЦЂХёХ¶ХЎХµХ«Х¶ ЦѓХёХЅХїХ¶ ХёЦ‚ ХЈХЎХІХїХ¶ХЎХўХЎХјХЁЦ‰",
+            INVALID_CREDENTIALS: "Ф·Х¬ХҐХЇХїЦЂХёХ¶ХЎХµХ«Х¶ ЦѓХёХЅХїХЁ ХЇХЎХґ ХЈХЎХІХїХ¶ХЎХўХЎХјХЁ ХЅХ­ХЎХ¬ Х§Ц‰",
+            REGISTRATION_FAILED: "ФіЦЂХЎХ¶ЦЃХёЦ‚ХґХЁ Х№Х°ХЎХ»ХёХІХѕХҐЦЃЦ‰",
+            LOGIN_FAILED: "Х„ХёЦ‚ХїЦ„ХЁ Х№Х°ХЎХ»ХёХІХѕХҐЦЃЦ‰"
         };
 
         throw new Error(
-            errors[data.error] || data.error || "Գործողությունը չհաջողվեց։"
+            errors[data.error] || data.error || "ФіХёЦЂХ®ХёХІХёЦ‚Х©ХµХёЦ‚Х¶ХЁ Х№Х°ХЎХ»ХёХІХѕХҐЦЃЦ‰"
         );
     }
 
@@ -325,11 +328,11 @@ async function registerUser() {
     const confirmPassword = document.getElementById("confirm-password").value;
 
     if (password !== confirmPassword) {
-        showAuthMessage("Գաղտնաբառերը չեն համընկնում։", true);
+        showAuthMessage("ФіХЎХІХїХ¶ХЎХўХЎХјХҐЦЂХЁ Х№ХҐХ¶ Х°ХЎХґХЁХ¶ХЇХ¶ХёЦ‚ХґЦ‰", true);
         return;
     }
 
-    const originalText = "ԳՐԱՆՑՎԵԼ <span>→</span>";
+    const originalText = "ФіХђФ±Х†Х‘ХЋФµФј <span>в†’</span>";
 
     try {
         setAuthLoading(registerButton, true, originalText);
@@ -343,7 +346,7 @@ async function registerUser() {
         saveAuthToken(data.token, true);
         saveAuthUser(data, true);
 
-        showAuthMessage("Գրանցումը հաջողվեց։ Բարի գալուստ ZENIX։");
+        showAuthMessage("ФіЦЂХЎХ¶ЦЃХёЦ‚ХґХЁ Х°ХЎХ»ХёХІХѕХҐЦЃЦ‰ ФІХЎЦЂХ« ХЈХЎХ¬ХёЦ‚ХЅХї ZENIXЦ‰");
 
         window.location.href = "index.html";
 
@@ -370,7 +373,7 @@ async function loginUser() {
     const remember =
         document.getElementById("remember-me")?.checked ?? false;
 
-    const originalText = "ՄՈՒՏՔ ԳՈՐԾԵԼ <span>→</span>";
+    const originalText = "Х„Х€Х’ХЏХ” ФіХ€ХђФѕФµФј <span>в†’</span>";
 
     try {
         setAuthLoading(loginButton, true, originalText);
@@ -383,7 +386,7 @@ async function loginUser() {
         saveAuthToken(data.token, remember);
         saveAuthUser(data, remember);
 
-        showAuthMessage("Մուտքը հաջողվեց։ Բարի վերադարձ։");
+        showAuthMessage("Х„ХёЦ‚ХїЦ„ХЁ Х°ХЎХ»ХёХІХѕХҐЦЃЦ‰ ФІХЎЦЂХ« ХѕХҐЦЂХЎХ¤ХЎЦЂХ±Ц‰");
 
         window.location.href = "index.html";
 
@@ -426,7 +429,7 @@ if (authMessage) {
             event.preventDefault();
 
             showAuthMessage(
-                "Գաղտնաբառի վերականգնումը դեռ միացված չէ։"
+                "ФіХЎХІХїХ¶ХЎХўХЎХјХ« ХѕХҐЦЂХЎХЇХЎХ¶ХЈХ¶ХёЦ‚ХґХЁ Х¤ХҐХј ХґХ«ХЎЦЃХѕХЎХ® Х№Х§Ц‰"
             );
         });
     }
@@ -477,19 +480,19 @@ function checkGreeting(text) {
     const normalized = text
         .toLowerCase()
         .normalize("NFC")
-        .replace(/[!?.,։՝՛]/g, "")
+        .replace(/[!?.,Ц‰ХќХ›]/g, "")
         .trim();
 
     const greetings = [
-        "բարև",
-        "բարև ձեզ",
-        "բարև զենիքս",
-        "բարև zenix",
+        "ХўХЎЦЂЦ‡",
+        "ХўХЎЦЂЦ‡ Х±ХҐХ¦",
+        "ХўХЎЦЂЦ‡ Х¦ХҐХ¶Х«Ц„ХЅ",
+        "ХўХЎЦЂЦ‡ zenix",
         "hello",
         "hi",
         "privet",
-        "привет",
-        "здравствуй"
+        "РїСЂРёРІРµС‚",
+        "Р·РґСЂР°РІСЃС‚РІСѓР№"
     ];
 
     return greetings.some(greeting =>
@@ -526,7 +529,7 @@ function showLoading() {
     const loading = document.createElement("div");
 
     loading.className = "message loading-message";
-    loading.textContent = "ZENIX մտածում է... 💙";
+    loading.textContent = "ZENIX ХґХїХЎХ®ХёЦ‚Хґ Х§... рџ’™";
 
     messages.appendChild(loading);
     messages.scrollTop = messages.scrollHeight;
@@ -647,7 +650,7 @@ async function speakReply(text) {
     let audioUrl = null;
 
     try {
-        const response = await fetch(API_BASE + "/api/speech", {
+        const response = await fetch(API_URL + "/api/speech", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json"
@@ -718,7 +721,7 @@ async function speakReply(text) {
 
             console.error("BROWSER VOICE ERROR:", browserError);
 
-            addMessage("ZENIX-ի ձայնը հիմա անհասանելի է։ ❤️");
+            addMessage("ZENIX-Х« Х±ХЎХµХ¶ХЁ Х°Х«ХґХЎ ХЎХ¶Х°ХЎХЅХЎХ¶ХҐХ¬Х« Х§Ц‰ вќ¤пёЏ");
         }
 
     } finally {
@@ -772,7 +775,7 @@ async function sendMessage() {
     }
 
     try {
-        const response = await fetch(API_BASE + "/api/chat", {
+        const response = await fetch(API_URL + "/api/chat", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
@@ -799,7 +802,7 @@ async function sendMessage() {
             typeof data.reply !== "string" ||
             !data.reply.trim()
         ) {
-            throw new Error("ZENIX-ը դատարկ պատասխան է վերադարձրել։");
+            throw new Error("ZENIX-ХЁ Х¤ХЎХїХЎЦЂХЇ ХєХЎХїХЎХЅХ­ХЎХ¶ Х§ ХѕХҐЦЂХЎХ¤ХЎЦЂХ±ЦЂХҐХ¬Ц‰");
         }
 
         history.push({
@@ -815,7 +818,7 @@ async function sendMessage() {
         console.error("ZENIX CHAT ERROR:", error);
 
         addMessage(
-            "Ներողություն, կապի ժամանակ սխալ առաջացավ։ Փորձիր կրկին։"
+            "Х†ХҐЦЂХёХІХёЦ‚Х©ХµХёЦ‚Х¶, ХЇХЎХєХ« ХЄХЎХґХЎХ¶ХЎХЇ ХЅХ­ХЎХ¬ ХЎХјХЎХ»ХЎЦЃХЎХѕЦ‰ Х“ХёЦЂХ±Х«ЦЂ ХЇЦЂХЇХ«Х¶Ц‰"
         );
 
     } finally {
@@ -884,7 +887,7 @@ async function sendMessage() {
     }
 
     try {
-        const response = await fetch(API_BASE + "/api/chat", {
+        const response = await fetch(API_URL + "/api/chat", {
             method: "POST",
 
             headers: {
@@ -912,7 +915,7 @@ async function sendMessage() {
             typeof data.reply !== "string" ||
             !data.reply.trim()
         ) {
-            throw new Error("ZENIX-ը դատարկ պատասխան է վերադարձրել։");
+            throw new Error("ZENIX-ХЁ Х¤ХЎХїХЎЦЂХЇ ХєХЎХїХЎХЅХ­ХЎХ¶ Х§ ХѕХҐЦЂХЎХ¤ХЎЦЂХ±ЦЂХҐХ¬Ц‰");
         }
 
         history.push({
@@ -928,7 +931,7 @@ async function sendMessage() {
         console.error("ZENIX CHAT ERROR:", error);
 
         addMessage(
-            "Ներողություն, կապի ժամանակ սխալ առաջացավ։ Փորձիր կրկին։"
+            "Х†ХҐЦЂХёХІХёЦ‚Х©ХµХёЦ‚Х¶, ХЇХЎХєХ« ХЄХЎХґХЎХ¶ХЎХЇ ХЅХ­ХЎХ¬ ХЎХјХЎХ»ХЎЦЃХЎХѕЦ‰ Х“ХёЦЂХ±Х«ЦЂ ХЇЦЂХЇХ«Х¶Ц‰"
         );
 
     } finally {
@@ -973,7 +976,7 @@ async function startListening() {
         !navigator.mediaDevices?.getUserMedia ||
         !window.MediaRecorder
     ) {
-        addMessage("Քո դիտարկիչը չի աջակցում ձայնագրությանը։");
+        addMessage("Х”Хё Х¤Х«ХїХЎЦЂХЇХ«Х№ХЁ Х№Х« ХЎХ»ХЎХЇЦЃХёЦ‚Хґ Х±ХЎХµХ¶ХЎХЈЦЂХёЦ‚Х©ХµХЎХ¶ХЁЦ‰");
         return;
     }
 
@@ -1026,10 +1029,10 @@ async function startListening() {
 
         listening = true;
 
-        voiceBtn.textContent = "⏹";
+        voiceBtn.textContent = "вЏ№";
         voiceBtn.classList.add("listening");
 
-        addMessage("Լսում եմ քեզ... Խոսիր, հետո սեղմիր ⏹ ❤️");
+        addMessage("ФјХЅХёЦ‚Хґ ХҐХґ Ц„ХҐХ¦... ФЅХёХЅХ«ЦЂ, Х°ХҐХїХё ХЅХҐХІХґХ«ЦЂ вЏ№ вќ¤пёЏ");
 
     } catch (error) {
         if (stream) {
@@ -1038,7 +1041,7 @@ async function startListening() {
 
         listening = false;
 
-        addMessage("Չհաջողվեց միացնել խոսափողը։ Թույլատրիր մուտքը։");
+        addMessage("Х‰Х°ХЎХ»ХёХІХѕХҐЦЃ ХґХ«ХЎЦЃХ¶ХҐХ¬ Х­ХёХЅХЎЦѓХёХІХЁЦ‰ Ф№ХёЦ‚ХµХ¬ХЎХїЦЂХ«ЦЂ ХґХёЦ‚ХїЦ„ХЁЦ‰");
 
         console.error("MICROPHONE ERROR:", error);
 
@@ -1058,7 +1061,7 @@ function stopListening() {
     listening = false;
 
     if (voiceBtn) {
-        voiceBtn.textContent = "🎤";
+        voiceBtn.textContent = "рџЋ¤";
         voiceBtn.classList.remove("listening");
     }
 }
@@ -1068,7 +1071,7 @@ function stopListening() {
 
 async function sendAudioForTranscription(blob, mimeType) {
     if (!blob.size) {
-        addMessage("Ձայնագրությունը դատարկ է։");
+        addMessage("ХЃХЎХµХ¶ХЎХЈЦЂХёЦ‚Х©ХµХёЦ‚Х¶ХЁ Х¤ХЎХїХЎЦЂХЇ Х§Ц‰");
         return;
     }
 
@@ -1078,9 +1081,9 @@ async function sendAudioForTranscription(blob, mimeType) {
         try {
             const base64 = reader.result.split(",")[1];
 
-            addMessage("ZENIX-ը լսում է ձայնագրությունը... 🎧");
+            addMessage("ZENIX-ХЁ Х¬ХЅХёЦ‚Хґ Х§ Х±ХЎХµХ¶ХЎХЈЦЂХёЦ‚Х©ХµХёЦ‚Х¶ХЁ... рџЋ§");
 
-            const response = await fetch(API_BASE + "/api/transcribe", {
+            const response = await fetch(API_URL + "/api/transcribe", {
                 method: "POST",
 
                 headers: {
@@ -1096,11 +1099,11 @@ async function sendAudioForTranscription(blob, mimeType) {
             const data = await response.json();
 
             if (!response.ok) {
-                throw new Error(data.error || "Ձայնի ճանաչման սխալ");
+                throw new Error(data.error || "ХЃХЎХµХ¶Х« ХіХЎХ¶ХЎХ№ХґХЎХ¶ ХЅХ­ХЎХ¬");
             }
 
             if (!data.text) {
-                throw new Error("Չհաջողվեց ճանաչել խոսքը։");
+                throw new Error("Х‰Х°ХЎХ»ХёХІХѕХҐЦЃ ХіХЎХ¶ХЎХ№ХҐХ¬ Х­ХёХЅЦ„ХЁЦ‰");
             }
 
             input.value = data.text;
@@ -1118,19 +1121,19 @@ async function sendAudioForTranscription(blob, mimeType) {
                 message.includes("resource_exhausted")
             ) {
                 addMessage(
-                    "ZENIX-ի ձայնային ծառայության անվճար սահմանաչափը սպառվել է։ ❤️ Փորձիր ավելի ուշ։"
+                    "ZENIX-Х« Х±ХЎХµХ¶ХЎХµХ«Х¶ Х®ХЎХјХЎХµХёЦ‚Х©ХµХЎХ¶ ХЎХ¶ХѕХіХЎЦЂ ХЅХЎХ°ХґХЎХ¶ХЎХ№ХЎЦѓХЁ ХЅХєХЎХјХѕХҐХ¬ Х§Ц‰ вќ¤пёЏ Х“ХёЦЂХ±Х«ЦЂ ХЎХѕХҐХ¬Х« ХёЦ‚Х·Ц‰"
                 );
 
             } else {
                 addMessage(
-                    "Ձայնի ճանաչման ժամանակ սխալ տեղի ունեցավ։ Խնդրում եմ կրկին փորձիր։"
+                    "ХЃХЎХµХ¶Х« ХіХЎХ¶ХЎХ№ХґХЎХ¶ ХЄХЎХґХЎХ¶ХЎХЇ ХЅХ­ХЎХ¬ ХїХҐХІХ« ХёЦ‚Х¶ХҐЦЃХЎХѕЦ‰ ФЅХ¶Х¤ЦЂХёЦ‚Хґ ХҐХґ ХЇЦЂХЇХ«Х¶ ЦѓХёЦЂХ±Х«ЦЂЦ‰"
                 );
             }
         }
     };
 
     reader.onerror = () => {
-        addMessage("Չհաջողվեց կարդալ ձայնագրությունը։");
+        addMessage("Х‰Х°ХЎХ»ХёХІХѕХҐЦЃ ХЇХЎЦЂХ¤ХЎХ¬ Х±ХЎХµХ¶ХЎХЈЦЂХёЦ‚Х©ХµХёЦ‚Х¶ХЁЦ‰");
         console.error("AUDIO FILE ERROR:", reader.error);
     };
 
@@ -1157,7 +1160,7 @@ if (voiceBtn) {
 // START ZENIX
 // ==========================================
 
-console.log("ZENIX CHAT CONNECTED! 💙");
+console.log("ZENIX CHAT CONNECTED! рџ’™");
 
 waveRobot();
 
@@ -1184,10 +1187,10 @@ waveRobot();
     };
 
     const fallbackTitles = {
-        home: "Բարի գալուստ ZENIX",
-        chats: "Զրույցներ",
-        favorites: "Սիրվածներ",
-        settings: "Կարգավորումներ"
+        home: "ФІХЎЦЂХ« ХЈХЎХ¬ХёЦ‚ХЅХї ZENIX",
+        chats: "Ф¶ЦЂХёЦ‚ХµЦЃХ¶ХҐЦЂ",
+        favorites: "ХЌХ«ЦЂХѕХЎХ®Х¶ХҐЦЂ",
+        settings: "ФїХЎЦЂХЈХЎХѕХёЦЂХёЦ‚ХґХ¶ХҐЦЂ"
     };
 
     const title = document.getElementById("pageTitle");
@@ -1259,7 +1262,7 @@ waveRobot();
         updatePageTitle
     };
 
-    console.log("ZENIX NAVIGATION CONNECTED 💙");
+    console.log("ZENIX NAVIGATION CONNECTED рџ’™");
 })();
 
 
@@ -1391,12 +1394,12 @@ waveRobot();
         applyPageTranslations
     );
 
-    console.log("ZENIX LANGUAGE CONNECTED 💙");
+    console.log("ZENIX LANGUAGE CONNECTED рџ’™");
 
 })();
 // ==========================================
 // ZENIX MOBILE PANEL CONTROL
-// Ավելացնել cods.js-ի ամենավերջում
+// Ф±ХѕХҐХ¬ХЎЦЃХ¶ХҐХ¬ cods.js-Х« ХЎХґХҐХ¶ХЎХѕХҐЦЂХ»ХёЦ‚Хґ
 // ==========================================
 
 (function initZenixMobilePanels() {
@@ -1465,7 +1468,7 @@ waveRobot();
 
     overlay.addEventListener("click", closePanels);
 
-    // Մենյուից էջ ընտրելուց հետո փակում ենք վահանակը
+    // Х„ХҐХ¶ХµХёЦ‚Х«ЦЃ Х§Х» ХЁХ¶ХїЦЂХҐХ¬ХёЦ‚ЦЃ Х°ХҐХїХё ЦѓХЎХЇХёЦ‚Хґ ХҐХ¶Ц„ ХѕХЎХ°ХЎХ¶ХЎХЇХЁ
     sidebar.addEventListener("click", event => {
         const pageButton = event.target.closest(
             "nav button[data-page]"
@@ -1476,20 +1479,21 @@ waveRobot();
         }
     });
 
-    // Փակում ենք Escape կոճակով
+    // Х“ХЎХЇХёЦ‚Хґ ХҐХ¶Ц„ Escape ХЇХёХіХЎХЇХёХѕ
     document.addEventListener("keydown", event => {
         if (event.key === "Escape") {
             closePanels();
         }
     });
 
-    // Եթե հեռախոսից անցնում ենք մեծ էկրան, փակում ենք վահանակները
+    // ФµХ©ХҐ Х°ХҐХјХЎХ­ХёХЅХ«ЦЃ ХЎХ¶ЦЃХ¶ХёЦ‚Хґ ХҐХ¶Ц„ ХґХҐХ® Х§ХЇЦЂХЎХ¶, ЦѓХЎХЇХёЦ‚Хґ ХҐХ¶Ц„ ХѕХЎХ°ХЎХ¶ХЎХЇХ¶ХҐЦЂХЁ
     window.addEventListener("resize", () => {
         if (window.innerWidth > 750) {
             closePanels();
         }
     });
 
-    console.log("ZENIX MOBILE PANELS CONNECTED 💙");
+    console.log("ZENIX MOBILE PANELS CONNECTED рџ’™");
 
 })();
+
