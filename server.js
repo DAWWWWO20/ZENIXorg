@@ -3929,8 +3929,7 @@ app.get(
     userMemoryContext,
     (req, res) => {
         try {
-            const memory = loadMemory();
-
+const history = loadUserHistory(req.user.userId);
             return res.json({
                 userId: req.user.userId,
                 summary: getMemorySummary(memory),
