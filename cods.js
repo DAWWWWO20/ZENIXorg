@@ -476,23 +476,29 @@ function waveRobot() {
     }, 3400);
 }
 
+
 function checkGreeting(text) {
     const normalized = text
         .toLowerCase()
         .normalize("NFC")
-        .replace(/[!?.,Ц‰ХќХ›]/g, "")
+        .replace(/[!?.,՝։՞՜]/g, "")
         .trim();
 
     const greetings = [
-        "ХўХЎЦЂЦ‡",
-        "ХўХЎЦЂЦ‡ Х±ХҐХ¦",
-        "ХўХЎЦЂЦ‡ Х¦ХҐХ¶Х«Ц„ХЅ",
-        "ХўХЎЦЂЦ‡ zenix",
+        "բարև",
+        "բարեւ",
+        "բարև ձեզ",
+        "բարեւ ձեզ",
+        "բարև զենիքս",
+        "բարև zenix",
+        "ողջույն",
+        "ողջույն ձեզ",
         "hello",
         "hi",
+        "hey",
         "privet",
-        "РїСЂРёРІРµС‚",
-        "Р·РґСЂР°РІСЃС‚РІСѓР№"
+        "привет",
+        "здравствуйте"
     ];
 
     return greetings.some(greeting =>
@@ -529,8 +535,7 @@ function showLoading() {
     const loading = document.createElement("div");
 
     loading.className = "message loading-message";
-    loading.textContent = "ZENIX ХґХїХЎХ®ХёЦ‚Хґ Х§... рџ’™";
-
+loading.textContent = "ZENIX-ը մտածում է... 💙";
     messages.appendChild(loading);
     messages.scrollTop = messages.scrollHeight;
 
@@ -850,106 +855,7 @@ if (sendBtn) {
 // ZENIX SEND MESSAGE
 // ==========================================
 
-async function sendMessage() {
-    if (!input || !messages) return;
 
-    const text = input.value.trim();
-
-    if (!text || busy) return;
-
-    let token;
-
-    try {
-        token = getAuthToken();
-    } catch (error) {
-        logoutUser();
-        return;
-    }
-
-    if (checkGreeting(text)) {
-        waveRobot();
-    }
-
-    busy = true;
-    input.value = "";
-
-    addMessage(text, "user");
-
-    history.push({
-        role: "user",
-        text
-    });
-
-    const loading = showLoading();
-
-    if (sendBtn) {
-        sendBtn.disabled = true;
-    }
-
-    try {
-        const response = await fetch(API_URL + "/api/chat", {
-            method: "POST",
-
-            headers: {
-                "Content-Type": "application/json",
-                "Authorization": "Bearer " + token
-            },
-
-            body: JSON.stringify({
-                history
-            })
-        });
-
-        const data = await response.json();
-
-        if (response.status === 401) {
-            logoutUser();
-            return;
-        }
-
-        if (!response.ok) {
-            throw new Error(data.error || "ZENIX CHAT ERROR");
-        }
-
-        if (
-            typeof data.reply !== "string" ||
-            !data.reply.trim()
-        ) {
-            throw new Error("ZENIX-ХЁ Х¤ХЎХїХЎЦЂХЇ ХєХЎХїХЎХЅХ­ХЎХ¶ Х§ ХѕХҐЦЂХЎХ¤ХЎЦЂХ±ЦЂХҐХ¬Ц‰");
-        }
-
-        history.push({
-            role: "assistant",
-            text: data.reply
-        });
-
-        addMessage(data.reply, "bot");
-
-        robotTalk();
-
-    } catch (error) {
-        console.error("ZENIX CHAT ERROR:", error);
-
-        addMessage(
-            "Х†ХҐЦЂХёХІХёЦ‚Х©ХµХёЦ‚Х¶, ХЇХЎХєХ« ХЄХЎХґХЎХ¶ХЎХЇ ХЅХ­ХЎХ¬ ХЎХјХЎХ»ХЎЦЃХЎХѕЦ‰ Х“ХёЦЂХ±Х«ЦЂ ХЇЦЂХЇХ«Х¶Ц‰"
-        );
-
-    } finally {
-        if (loading) {
-            loading.remove();
-        }
-
-        busy = false;
-
-        if (sendBtn) {
-            sendBtn.disabled = false;
-        }
-
-        if (input) {
-            input.focus();
-        }
-    }
-}
 
 
 
