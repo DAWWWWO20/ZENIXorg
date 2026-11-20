@@ -1,4 +1,4 @@
-﻿
+
 /* =====================================================
    ZENIX AI — COMPLETE SERVER
    Unified Memory + Gemini + Google News
@@ -303,11 +303,18 @@ const GEMINI_URL =
     GEMINI_MODEL +
     ":generateContent?key=";
 
+
+const allowedOrigins = [
+    "https://dawwwwo20.github.io",
+    "https://zenixorg.onrender.com"
+];
+
 app.use((req, res, next) => {
-    res.header(
-        "Access-Control-Allow-Origin",
-        "https://dawwwwo20.github.io"
-    );
+    const origin = req.headers.origin;
+
+    if (allowedOrigins.includes(origin)) {
+        res.header("Access-Control-Allow-Origin", origin);
+    }
 
     res.header(
         "Access-Control-Allow-Methods",
@@ -319,12 +326,15 @@ app.use((req, res, next) => {
         "Content-Type, Authorization"
     );
 
+    res.header("Vary", "Origin");
+
     if (req.method === "OPTIONS") {
         return res.sendStatus(204);
     }
 
     next();
 });
+
 
 app.use(express.json({ limit: "15mb" }));
 
