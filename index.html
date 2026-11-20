@@ -1,0 +1,594 @@
+
+<!DOCTYPE html>
+<html lang="hy" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>ZENIX AI</title>
+
+    <link rel="stylesheet" href="style.css">
+    <link rel="icon" type="image/png" href="/favicon.png">
+</head>
+
+<body>
+
+<div class="app">
+
+    <div class="mobile-overlay" id="mobileOverlay" aria-hidden="true"></div>
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+
+        <h2>🤖 ZENIX</h2>
+
+        <nav class="zenix-navigation">
+
+            <button class="zenix-nav-btn" data-page="home">
+                <img src="/images/home.png" alt="" class="nav-icon">
+                <span data-i18n="navigation.home">Գլխավոր</span>
+            </button>
+
+            <button class="zenix-nav-btn" data-page="chats">
+                <img src="/images/chats.png" alt="" class="nav-icon">
+                <span data-i18n="navigation.chats">Զրույցներ</span>
+            </button>
+
+            <button class="zenix-nav-btn" data-page="favorites">
+                <img src="/images/favorites.png" alt="" class="nav-icon">
+                <span data-i18n="navigation.favorites">Սիրվածներ</span>
+            </button>
+
+            <button class="zenix-nav-btn" id="settingsBtn" data-page="settings">
+                <img src="/images/settings.png" alt="" class="nav-icon">
+                <span data-i18n="interface.settings">Կարգավորումներ</span>
+            </button>
+
+        </nav>
+
+        <div class="profile">
+            ● ZENIX ONLINE
+        </div>
+
+        <div class="auth-area" id="authArea">
+            <a href="register.html" class="auth-link" data-i18n="interface.login">
+                Մուտք / Գրանցում
+            </a>
+        </div>
+
+    </aside>
+
+
+    <!-- MAIN -->
+    <main class="main">
+
+        <header class="zenix-header">
+
+            <div class="mobile-controls">
+
+                <button id="mobileMenuBtn" type="button"
+                    aria-label="Բացել ձախ մենյուն" aria-expanded="false">☰</button>
+
+                <button id="mobileStatusBtn" type="button"
+                    aria-label="Բացել ZENIX կարգավիճակը" aria-expanded="false">⚡</button>
+
+            </div>
+
+            <h2 id="pageTitle" data-i18n="navigation.home">Բարի գալուստ ZENIX</h2>
+
+            <span>AI ASSISTANT ●</span>
+
+        </header>
+
+
+        <!-- HOME PAGE -->
+        <section id="homePage" class="page">
+
+            <div class="robot-area">
+
+                <div class="robot-3d" id="robot">
+
+                    <div class="antenna"></div>
+
+                    <div class="robot-head">
+                        <div class="ear left-ear"></div>
+                        <div class="ear right-ear"></div>
+
+                        <div class="visor">
+                            <div class="eye"></div>
+                            <div class="eye"></div>
+                            <div class="robot-mouth"></div>
+                        </div>
+                    </div>
+
+                    <div class="neck"></div>
+
+                    <div class="robot-torso">
+                        <div class="core"></div>
+                        <div class="chest-light"></div>
+                        <div class="robot-name">ZENIX</div>
+                    </div>
+
+                    <div class="arms">
+                        <div class="arm left-arm"></div>
+                        <div class="arm right-arm"></div>
+                    </div>
+
+                    <div class="legs">
+                        <div class="leg"></div>
+                        <div class="leg"></div>
+                    </div>
+
+                    <div class="hologram-floor">
+                        <div class="floor-ring ring-one"></div>
+                        <div class="floor-ring ring-two"></div>
+                        <div class="floor-ring ring-three"></div>
+                        <div class="floor-glow"></div>
+                    </div>
+
+                </div>
+
+                <h1 data-i18n="messages.welcome">Ես ZENIX-ն եմ</h1>
+
+                <p data-i18n="interface.description">
+                    Քո անձնական արհեստական բանականությունը
+                </p>
+
+                <p data-i18n="interface.greeting">
+                    Բարև՛։ Ես պատրաստ եմ օգնել քեզ ❤️
+                </p>
+
+            </div>
+
+
+            <!-- CHAT -->
+            <section class="chat">
+
+                <div id="messages" class="messages"
+                    aria-live="polite" aria-label="Chat messages"></div>
+
+                <div class="input-area">
+
+                    <input id="userInput" type="text"
+                        data-i18n-placeholder="interface.placeholder"
+                        placeholder="Գրիր քո հաղորդագրությունը..."
+                        autocomplete="off">
+
+                    <button id="sendBtn" type="button"
+                        data-i18n="interface.send">➤</button>
+
+                    <button id="voiceBtn" type="button"
+                        data-i18n="interface.microphone">🎤</button>
+
+                </div>
+
+            </section>
+
+        </section>
+
+
+        <!-- CHATS PAGE -->
+       
+<section id="chatsPage" class="page zenix-content-page" hidden>
+
+    <button class="back-home" type="button">
+        <img src="/images/home.png" alt="Home">
+        <span data-i18n="navigation.back">Գլխավոր էջ</span>
+    </button>
+
+    <div class="content-page-header">
+
+        <div class="content-heading">
+
+            <div class="content-icon">
+                <img src="/images/chats.png" alt="" class="content-icon-img">
+            </div>
+
+            <div>
+                <span class="content-eyebrow">ZENIX AI</span>
+
+                <h2 data-i18n="navigation.chats">Իմ զրույցները</h2>
+
+                <p data-i18n="chats.description">Քո բոլոր զրույցները մեկ վայրում</p>
+            </div>
+
+        </div>
+
+        <div class="content-header-actions">
+
+            <div class="content-search">
+                <i data-lucide="search"></i>
+
+                <input type="search"
+                    placeholder="Որոնել զրույցներ..."
+                    data-i18n-placeholder="chats.search"
+                    aria-label="Որոնել զրույցներ..."
+                    data-i18n-aria-label="chats.search">
+            </div>
+
+            <div class="content-action-button">
+                <i data-lucide="plus"></i>
+                <span data-i18n="chats.new">Նոր զրույց</span>
+            </div>
+
+        </div>
+
+    </div>
+
+    <div class="content-section-title">
+
+        <div>
+            <h3 data-i18n="chats.recent">Վերջին զրույցները</h3>
+            <p data-i18n="chats.history">Քո զրույցների պատմությունը</p>
+        </div>
+
+        <div class="content-filter">
+            <i data-lucide="sliders-horizontal"></i>
+            <span data-i18n="chats.all">Բոլորը</span>
+        </div>
+
+    </div>
+
+    <div class="chat-list-container">
+
+        <div class="empty-state">
+
+            <div class="empty-state-visual">
+                <div class="empty-glow"></div>
+                <img src="/images/chats.png" alt="" class="content-icon-img">
+            </div>
+
+            <h3 data-i18n="chats.emptyTitle">Դեռ զրույցներ չկան</h3>
+
+            <p data-i18n="chats.emptyDescription">
+                Երբ սկսես զրուցել ZENIX-ի հետ,
+                քո զրույցները կհայտնվեն այստեղ։
+            </p>
+
+            <div class="empty-state-decoration">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+
+        </div>
+
+    </div>
+
+    <div class="content-footer-note">
+        <i data-lucide="shield-check"></i>
+        <span data-i18n="chats.footer">Քո զրույցները նախատեսված են քեզ համար</span>
+    </div>
+
+</section>
+
+
+<!-- FAVORITES PAGE -->
+<section id="favoritesPage" class="page zenix-content-page" hidden>
+
+    <button class="back-home" type="button">
+        <img src="/images/home.png" alt="Home">
+        <span data-i18n="navigation.back">Գլխավոր էջ</span>
+    </button>
+
+    <div class="content-page-header">
+
+        <div class="content-heading">
+
+            <div class="content-icon favorite-icon">
+                <img src="/images/favorites.png" alt="" class="content-icon-img">
+            </div>
+
+            <div>
+                <span class="content-eyebrow">ZENIX COLLECTION</span>
+
+                <h2 data-i18n="navigation.favorites">Սիրվածներ</h2>
+
+                <p data-i18n="favorites.description">Քո պահպանած կարևոր զրույցները</p>
+            </div>
+
+        </div>
+
+        <div class="content-header-actions">
+
+            <div class="content-search">
+                <i data-lucide="search"></i>
+
+                <input type="search"
+                    placeholder="Որոնել սիրվածներում..."
+                    data-i18n-placeholder="favorites.search"
+                    aria-label="Որոնել սիրվածներում..."
+                    data-i18n-aria-label="favorites.search">
+            </div>
+
+        </div>
+
+    </div>
+
+    <div class="content-section-title">
+
+        <div>
+            <h3 data-i18n="favorites.collection">Իմ հավաքածուն</h3>
+            <p data-i18n="favorites.collectionDescription">Քեզ համար առանձնացված զրույցներ</p>
+        </div>
+
+        <div class="content-filter">
+            <i data-lucide="star"></i>
+            <span data-i18n="favorites.filter">Սիրվածներ</span>
+        </div>
+
+    </div>
+
+    <div class="favorites-list-container">
+
+        <div class="empty-state favorite-empty-state">
+
+            <div class="empty-state-visual favorite-visual">
+                <div class="empty-glow"></div>
+                <img src="/images/favorites.png" alt="" class="content-icon-img">
+            </div>
+
+            <h3 data-i18n="favorites.emptyTitle">Դեռ սիրվածներ չունես</h3>
+
+            <p data-i18n="favorites.emptyDescription">
+                Քեզ կարևոր զրույցները կարող ես
+                հետագայում ավելացնել այս բաժնում։
+            </p>
+
+            <div class="empty-state-decoration">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+
+        </div>
+
+    </div>
+
+    <div class="content-footer-note">
+        <i data-lucide="heart"></i>
+        <span data-i18n="favorites.footer">Քո ամենակարևոր զրույցները՝ մեկ վայրում</span>
+    </div>
+
+</section>
+
+
+<!-- SETTINGS PAGE -->
+<section id="settingsPanel" class="page zenix-content-page" hidden>
+
+    <button class="back-home" type="button">
+        <img src="/images/home.png" alt="Home">
+        <span data-i18n="navigation.back">Գլխավոր էջ</span>
+    </button>
+
+    <div class="content-page-header">
+
+        <div class="content-heading">
+
+            <div class="content-icon settings-icon">
+                <img src="/images/settings.png" alt="" class="content-icon-img">
+            </div>
+
+            <div>
+                <span class="content-eyebrow">ZENIX CONTROL CENTER</span>
+
+                <h2 data-i18n="interface.settings">Կարգավորումներ</h2>
+
+                <p data-i18n="settings.description">Կառավարիր ZENIX-ի նախընտրությունները</p>
+            </div>
+
+        </div>
+
+    </div>
+
+    <div class="settings-layout">
+
+        <!-- GENERAL SETTINGS -->
+        <div class="settings-card">
+
+            <div class="settings-card-header">
+
+                <div class="settings-card-icon">
+                    <img src="/images/general.png" alt="" class="content-icon-img">
+                </div>
+
+                <div>
+                    <h3 data-i18n="settings.general">Ընդհանուր</h3>
+                    <p data-i18n="settings.generalDescription">Հիմնական կարգավորումներ</p>
+                </div>
+
+            </div>
+
+            <div class="settings-option">
+
+                <div class="settings-option-info">
+
+                    <div class="settings-option-icon">
+                        <img src="/images/language.png" alt="" class="content-icon-img">
+                    </div>
+
+                    <div>
+                        <h4 data-i18n="interface.language">Լեզու</h4>
+
+                        <p data-i18n="interface.languageDescription">
+                            Ընտրիր ZENIX-ի աշխատանքային լեզուն։
+                        </p>
+                    </div>
+
+                </div>
+
+                <div id="languageSettings">
+
+                    <label for="languageSelect"
+                        data-i18n="interface.selectLanguage">
+                        Ընտրիր լեզուն՝
+                    </label>
+
+                    <select id="languageSelect">
+                        <option value="hy">🇦🇲 Հայերեն</option>
+                        <option value="en">🇬🇧 English</option>
+                        <option value="ru">🇷🇺 Русский</option>
+                       
+                    </select>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- APPEARANCE SETTINGS -->
+        <div class="settings-card">
+
+            <div class="settings-card-header">
+
+                <div class="settings-card-icon">
+                    <img src="/images/appearance.png" alt="" class="content-icon-img">
+                </div>
+
+                <div>
+                    <h3 data-i18n="settings.appearance">Արտաքին տեսք</h3>
+                    <p data-i18n="settings.appearanceDescription">ZENIX-ի տեսողական ոճը</p>
+                </div>
+
+            </div>
+
+            <div class="settings-option">
+
+                <div class="settings-option-info">
+
+                    <div class="settings-option-icon">
+                        <img src="/images/dark-mode.png" alt="" class="content-icon-img">
+                    </div>
+
+                    <div>
+                        <h4 data-i18n="settings.darkMode">Մուգ թեմա</h4>
+                        <p data-i18n="settings.darkModeDescription">ZENIX-ի հիմնական մուգ դիզայնը</p>
+                    </div>
+
+                </div>
+
+                <span class="settings-status">
+                    <i data-lucide="check"></i>
+                    <span data-i18n="settings.active">Ակտիվ</span>
+                </span>
+
+            </div>
+
+            <div class="settings-option">
+
+                <div class="settings-option-info">
+
+                    <div class="settings-option-icon">
+                        <img src="/images/neon.png" alt="" class="content-icon-img">
+                    </div>
+
+                    <div>
+                        <h4 data-i18n="settings.neon">Նեոնային ոճ</h4>
+                        <p data-i18n="settings.neonDescription">Կապույտ լուսային էֆեկտներ</p>
+                    </div>
+
+                </div>
+
+                <span class="settings-status">
+                    <i data-lucide="check"></i>
+                    <span data-i18n="settings.active">Ակտիվ</span>
+                </span>
+
+            </div>
+
+        </div>
+
+        <!-- ABOUT ZENIX -->
+        <div class="settings-card settings-about-card">
+
+            <div class="settings-card-header">
+
+                <div class="settings-card-icon">
+                    <img src="/images/robot.png" alt="" class="content-icon-img">
+                </div>
+
+                <div>
+                    <h3 data-i18n="settings.ai">ZENIX AI</h3>
+                    <p data-i18n="settings.aiDescription">Քո անձնական արհեստական բանականությունը</p>
+                </div>
+
+            </div>
+
+            <div class="settings-about-content">
+
+                <div class="settings-about-logo">
+                    <img src="/images/robot.png" alt="" class="content-icon-img">
+                </div>
+
+                <div>
+                    <h3>ZENIX</h3>
+                    <p>Intelligence Beyond Limits</p>
+
+                    <span class="settings-version">
+                        Version 1.0
+                    </span>
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <div class="content-footer-note">
+        <i data-lucide="shield-check"></i>
+        <span data-i18n="settings.footer">ZENIX-ի կառավարման կենտրոն</span>
+    </div>
+
+</section>
+
+
+    </main>
+
+
+    <!-- RIGHTBAR -->
+    <aside class="rightbar">
+
+        <h3>⚡ ZENIX STATUS</h3>
+
+        <div class="info">
+            🧠 AI STATUS<br>
+            <b>ONLINE</b>
+        </div>
+
+        <div class="info">
+            🔊 VOICE<br>
+            <b>READY</b>
+        </div>
+
+        <div class="info">
+            ✨ VERSION<br>
+            <b>1.0</b>
+        </div>
+
+    </aside>
+
+</div>
+
+
+<!-- LANGUAGE FILES -->
+<script src="./ZENIX-LANGUAGE/languages/hy.js"></script>
+<script src="./ZENIX-LANGUAGE/languages/en.js"></script>
+<script src="./ZENIX-LANGUAGE/languages/ru.js"></script>
+
+
+
+<!-- LANGUAGE MODULES -->
+<script src="./ZENIX-LANGUAGE/js/language.js"></script>
+<script src="./ZENIX-LANGUAGE/js/translations.js"></script>
+<script src="./ZENIX-LANGUAGE/js/armenian-transliterator.js"></script>
+<script src="./ZENIX-LANGUAGE/js/speech.js"></script>
+<script src="./ZENIX-LANGUAGE/js/voice.js"></script>
+
+
+<!-- MAIN ZENIX SYSTEM -->
+<script src="cods.js"></script>
+
+</body>
+</html>

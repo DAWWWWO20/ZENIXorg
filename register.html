@@ -1,0 +1,235 @@
+
+<!DOCTYPE html>
+<html lang="hy">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>ZENIX | Մուտք և գրանցում</title>
+
+    <link rel="stylesheet" href="register.css">
+        <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+
+</head>
+
+<body>
+
+    <div class="background-glow glow-one"></div>
+    <div class="background-glow glow-two"></div>
+
+    <main class="auth-container">
+
+        <!-- ZENIX BRAND -->
+        <header class="brand">
+
+            <div class="logo">
+                <span>Z</span>
+            </div>
+
+            <h1>ZENIX</h1>
+            <p>YOUR PERSONAL AI ASSISTANT</p>
+
+        </header>
+
+        <section class="auth-card">
+
+            <!-- WELCOME -->
+            <div class="welcome">
+
+                <span class="status-dot"></span>
+                <span>WELCOME TO ZENIX</span>
+
+                <h2>Բարի գալուստ</h2>
+
+                <p>Քո անձնական AI օգնականը սպասում է քեզ։</p>
+
+            </div>
+
+            <!-- AUTH TABS -->
+            <input
+                type="radio"
+                name="auth-tab"
+                id="login-tab"
+                checked
+            >
+
+            <input
+                type="radio"
+                name="auth-tab"
+                id="register-tab"
+            >
+
+            <div class="tabs">
+
+                <label for="login-tab">Մուտք</label>
+                <label for="register-tab">Գրանցում</label>
+
+                <div class="tab-indicator"></div>
+
+            </div>
+
+            <!-- LOGIN FORM -->
+            <form
+                class="auth-form login-form"
+                id="login-form"
+                autocomplete="on"
+            >
+
+                <label for="login-email">
+                    Էլեկտրոնային փոստ
+                </label>
+
+                <input
+                    type="email"
+                    id="login-email"
+                    name="email"
+                    placeholder="example@email.com"
+                    autocomplete="username"
+                    required
+                >
+
+                <label for="login-password">
+                    Գաղտնաբառ
+                </label>
+
+                <input
+                    type="password"
+                    id="login-password"
+                    name="password"
+                    placeholder="Մուտքագրիր գաղտնաբառը"
+                    autocomplete="current-password"
+                    required
+                >
+
+                <div class="form-options">
+
+                    <label class="remember">
+
+                        <input
+                            type="checkbox"
+                            id="remember-me"
+                            name="remember"
+                        >
+
+                        Հիշել ինձ
+
+                    </label>
+
+                    <a href="#" id="forgot-password">
+                        Մոռացե՞լ ես գաղտնաբառը
+                    </a>
+
+                </div>
+
+                <button
+                    type="button"
+                    class="auth-button"
+                    id="login-button"
+                >
+                    ՄՈՒՏՔ ԳՈՐԾԵԼ
+                    <span>→</span>
+                </button>
+
+            </form>
+
+            <!-- REGISTER FORM -->
+            <form
+                class="auth-form register-form"
+                id="register-form"
+                autocomplete="on"
+            >
+
+                <label for="register-name">
+                    Անուն
+                </label>
+
+                <input
+                    type="text"
+                    id="register-name"
+                    name="name"
+                    placeholder="Մուտքագրիր անունդ"
+                    autocomplete="name"
+                    minlength="2"
+                    maxlength="50"
+                    required
+                >
+
+                <label for="register-email">
+                    Էլեկտրոնային փոստ
+                </label>
+
+                <input
+                    type="email"
+                    id="register-email"
+                    name="email"
+                    placeholder="example@email.com"
+                    autocomplete="email"
+                    required
+                >
+
+                <label for="register-password">
+                    Գաղտնաբառ
+                </label>
+
+                <input
+                    type="password"
+                    id="register-password"
+                    name="password"
+                    placeholder="Ստեղծիր գաղտնաբառ"
+                    autocomplete="new-password"
+                    minlength="8"
+                    required
+                >
+
+                <label for="confirm-password">
+                    Կրկնիր գաղտնաբառը
+                </label>
+
+                <input
+                    type="password"
+                    id="confirm-password"
+                    name="confirmPassword"
+                    placeholder="Կրկին մուտքագրիր գաղտնաբառը"
+                    autocomplete="new-password"
+                    minlength="8"
+                    required
+                >
+
+                <button
+                    type="button"
+                    class="auth-button"
+                    id="register-button"
+                >
+                    ԳՐԱՆՑՎԵԼ
+                    <span>→</span>
+                </button>
+
+            </form>
+
+            <!-- AUTH STATUS -->
+            <div
+                id="auth-message"
+                role="status"
+                aria-live="polite"
+                hidden
+            ></div>
+
+            <!-- SECURITY -->
+            <div class="security">
+
+                <span>◆</span>
+                Քո տեղեկատվությունը պաշտպանված է։
+
+            </div>
+
+        </section>
+
+        <!-- FOOTER -->
+        <footer>
+            © 2026 ZENIX AI. ALL RIGHTS RESERVED.
+        </footer>
+
+    </main>
+<script src="cods.js" defer></script>
+</body>
+</html>

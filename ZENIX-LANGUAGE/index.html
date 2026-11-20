@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="hy">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>ZENIX Language System</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            background: #07111f;
+            color: #ffffff;
+            font-family: Arial, sans-serif;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 600px;
+            padding: 30px;
+            border: 1px solid #1675d1;
+            border-radius: 18px;
+            background: #0c1b2e;
+            box-shadow: 0 0 25px #0875d533;
+        }
+
+        h1 {
+            text-align: center;
+            color: #35a8ff;
+        }
+
+        select,
+        input,
+        button {
+            width: 100%;
+            padding: 13px;
+            margin-top: 12px;
+            border: 1px solid #267fc4;
+            border-radius: 8px;
+            background: #102942;
+            color: white;
+            font-size: 15px;
+        }
+
+        button {
+            cursor: pointer;
+            background: #0875d5;
+        }
+
+        button:hover {
+            background: #1597ff;
+        }
+
+        #welcome {
+            min-height: 50px;
+            margin: 25px 0;
+            text-align: center;
+            font-size: 20px;
+        }
+
+        #status {
+            color: #8dcaff;
+            text-align: center;
+            margin-top: 15px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <main class="container">
+
+        <h1>ZENIX LANGUAGE SYSTEM</h1>
+
+        <label for="languageSelect">Language / Լեզու</label>
+
+        <select id="languageSelect">
+            <option value="hy">🇦🇲 Հայերեն</option>
+            <option value="en">🇬🇧 English</option>
+            <option value="ru">🇷🇺 Русский</option>
+            <option value="es">🇪🇸 Español</option>
+            <option value="fr">🇫🇷 Français</option>
+        </select>
+
+        <h2 id="title">ZENIX</h2>
+
+        <p id="welcome"></p>
+
+        <input
+            id="messageInput"
+            type="text"
+            placeholder="Գրիր քո հաղորդագրությունը..."
+        >
+
+        <button id="sendButton">Ուղարկել</button>
+
+        <button id="speakButton">🔊 Speak</button>
+
+        <button id="voiceButton">🎤 Microphone</button>
+
+        <button id="stopButton">⏹ Stop</button>
+
+        <p id="status"></p>
+
+    </main>
+
+    <!-- Language files -->
+    <script src="./languages/hy.js"></script>
+    <script src="./languages/en.js"></script>
+    <script src="./languages/ru.js"></script>
+    <script src="./languages/es.js"></script>
+    <script src="./languages/fr.js"></script>
+
+    <!-- Main JavaScript modules -->
+    <script src="./js/language.js"></script>
+    <script src="./js/translations.js"></script>
+<script src="./js/armenian-transliterator.js"></script>
+<script src="./js/speech.js"></script>
+<script src="./js/voice.js"></script>
+
+    <script>
+        "use strict";
+
+        const select = document.getElementById("languageSelect");
+        const welcome = document.getElementById("welcome");
+        const title = document.getElementById("title");
+        const input = document.getElementById("messageInput");
+        const status = document.getElementById("status");
+
+        function updateInterface() {
+            title.textContent = ZENIX_T("interface.title");
+            welcome.textContent = ZENIX_T("messages.welcome");
+            input.placeholder = ZENIX_T("interface.placeholder");
+
+            document.getElementById("sendButton").textContent =
+                ZENIX_T("interface.send");
+
+            document.getElementById("speakButton").textContent =
+                "🔊 " + ZENIX_T("interface.voice");
+
+            document.getElementById("voiceButton").textContent =
+                "🎤 " + ZENIX_T("interface.microphone");
+
+            document.getElementById("stopButton").textContent =
+                "⏹ " + ZENIX_T("interface.stop");
+        }
+
+        select.addEventListener("change", function () {
+            try {
+                ZENIX_LANGUAGE.setLanguage(this.value);
+            } catch (error) {
+                status.textContent = error.message;
+            }
+        });
+
+        window.addEventListener("zenix:languageChanged", function () {
+            updateInterface();
+            status.textContent = ZENIX_T("messages.languageChanged");
+        });
+
+        document.getElementById("sendButton").addEventListener("click", function () {
+            const message = input.value.trim();
+
+            if (!message) return;
+
+            status.textContent =
+                ZENIX_T("chat.user") + ": " + message;
+
+            input.value = "";
+        });
+
+        document.getElementById("speakButton").addEventListener("click", function () {
+            try {
+                ZENIX_SPEECH.speak(welcome.textContent);
+                status.textContent = ZENIX_T("messages.speaking");
+            } catch (error) {
+                status.textContent = error.message;
+            }
+        });
+
+        document.getElementById("voiceButton").addEventListener("click", function () {
+            ZENIX_VOICE.startListening({
+                onStart() {
+                    status.textContent = ZENIX_T("messages.listening");
+                },
+onResult(text) {
+    const language =
+        ZENIX_LANGUAGE.getCurrentLanguage();
+
+    if (language === "hy") {
+        input.value =
+            ZENIX_ARMENIAN_TRANSLITERATOR.convert(text);
+    } else {
+        input.value = text;
+    }
+},
+
+                onError(error) {
+                    status.textContent = error;
+                },
+
+                onEnd() {
+                    if (!status.textContent) {
+                        status.textContent = ZENIX_T("voice.stopListening");
+                    }
+                }
+            });
+        });
+
+        document.getElementById("stopButton").addEventListener("click", function () {
+            ZENIX_VOICE.stopListening();
+            ZENIX_SPEECH.stopSpeaking();
+            status.textContent = ZENIX_T("voice.stopListening");
+        });
+
+        ZENIX_LANGUAGE.setLanguage("hy");
+        updateInterface();
+
+    </script>
+
+</body>
+</html>
