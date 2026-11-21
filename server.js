@@ -1,9 +1,7 @@
-
 /* =====================================================
    ZENIX AI — COMPLETE SERVER
    Unified Memory + Gemini + Google News
 ===================================================== */
-
 const path = require("path");
 const fs = require("fs");
 const crypto = require("crypto");
@@ -1314,59 +1312,8 @@ function reply(armenian, russian, english, language = "Armenian") {
 /* =====================================================
    MEMORY STRUCTURE
 ===================================================== */
-
 function armenianTransliterate(value) {
     let text = String(value || "").normalize("NFC").trim();
-
-    const dictionary = {
-          im: "իմ",
-        du: "դու",
-        qo: "քո",
-        sireli: "սիրելի",
-        sirac: "սիրած",
-
-        hishir: "հիշիր",
-        hishum: "հիշում",
-        sirum: "սիրում",
-        xaghy: "խաղը",
-        xagh: "խաղ",
-        guyny: "գույնը",
-        guyn: "գույն",
-        kapuyt: "կապույտ",
-        sev: "սև",
-        karmir: "կարմիր",
-        deghin: "դեղին",
-        kanach: "կանաչ",
-
-        mirg: "միրգ",
-        mirgy: "միրգը",
-        banan: "բանան",
-        xndzor: "խնձոր",
-
-        meqena: "մեքենա",
-        meqenan: "մեքենան",
-        kendani: "կենդանի",
-        katu: "կատու",
-        shun: "շուն",
-
-        sport: "սպորտ",
-        sportadze: "սպորտաձև",
-        sportadzev: "սպորտաձև",
-        box: "բոքս",
-        futbol: "ֆուտբոլ",
-
-        ashun: "աշուն",
-        ashuny: "աշունը",
-
-        e: "է",
-        em: "եմ",
-        es: "ես",
-        en: "են",
-        chi: "չի",
-        che: "չէ",
-        inch: "ինչ",
-        vor: "որ"
-    };
 
     const map = {
         sh: "շ",
@@ -1416,10 +1363,6 @@ function armenianTransliterate(value) {
 
     return text.replace(/[a-z]+/gi, word => {
         const lower = word.toLowerCase();
-
-        if (dictionary[lower]) {
-            return dictionary[lower];
-        }
 
         let result = "";
 
@@ -1478,14 +1421,6 @@ function normalizePreferenceItem(item) {
 
 
 
-function normalizeText(value) {
-    return armenianTransliterate(String(value || ""))
-        .toLowerCase()
-        .normalize("NFC")
-        .replace(/[։.,!?՝'"]/gu, "")
-        .replace(/\s+/gu, " ")
-        .trim();
-}
 
 
 /* =====================================================
@@ -1886,11 +1821,16 @@ function isSensitiveMemory(value) {
 /* =====================================================
    MEMORY ITEM
 ===================================================== */
-
 function normalizeTaskKey(value) {
     return normalizeText(value)
-        .replace(/\b(?:պետք է|պիտի|անհրաժեշտ է|հիշեցրու|հիշեցնել|հիշիր)\b/gu, " ")
-        .replace(/\b(?:վաղը|այսօր|մյուս օրը)\b/gu, " ")
+        .replace(
+            /(?<![\p{L}\p{N}_])(?:պետք է|պիտի|անհրաժեշտ է|հիշեցրու|հիշեցնել|հիշիր)(?![\p{L}\p{N}_])/gu,
+            " "
+        )
+        .replace(
+            /(?<![\p{L}\p{N}_])(?:վաղը|այսօր|մյուս օրը)(?![\p{L}\p{N}_])/gu,
+            " "
+        )
         .replace(/\s+/gu, " ")
         .trim();
 }
@@ -1935,14 +1875,17 @@ function addMemoryItem(
         cleanValue = normalizePreferenceItem(cleanValue);
     }
 
-const normalized = collection === "tasks"
-    ? normalizeTaskKey(cleanValue)
-    : normalizeText(cleanValue);
+    const normalized = collection === "tasks"
+        ? normalizeTaskKey(cleanValue)
+        : normalizeText(cleanValue);
+
     if (!normalized) return false;
 
     // Հին արժեքի հեռացում
     if (oldValue) {
-        let oldNormalized = normalizeText(oldValue);
+        let oldNormalized = collection === "tasks"
+            ? normalizeTaskKey(oldValue)
+            : normalizeText(oldValue);
 
         if (collection === "preferences") {
             oldNormalized = normalizeText(
@@ -1951,7 +1894,9 @@ const normalized = collection === "tasks"
         }
 
         memory[collection] = memory[collection].filter(item => {
-            let itemNormalized = normalizeText(item);
+            let itemNormalized = collection === "tasks"
+                ? normalizeTaskKey(item)
+                : normalizeText(item);
 
             if (collection === "preferences") {
                 itemNormalized = normalizeText(
@@ -1965,9 +1910,10 @@ const normalized = collection === "tasks"
 
     // Կրկնությունների ստուգում
     const exists = memory[collection].some(item => {
-       let itemNormalized = collection === "tasks"
-    ? normalizeTaskKey(item)
-    : normalizeText(item);
+        let itemNormalized = collection === "tasks"
+            ? normalizeTaskKey(item)
+            : normalizeText(item);
+
         if (collection === "preferences") {
             itemNormalized = normalizeText(
                 normalizePreferenceItem(item)
@@ -1983,6 +1929,7 @@ const normalized = collection === "tasks"
 
     return true;
 }
+
 
 
 /* =====================================================
