@@ -435,52 +435,210 @@ fs.mkdirSync(MEMORY_DIR, {
 });
 function loadUsers() {
     try {
+        // Ստուգում ենք՝ արդյոք USERS_FILE գոյություն ունի։
         if (!fs.existsSync(USERS_FILE)) {
-            fs.writeFileSync(
-                USERS_FILE,
-                "[]",
-                "utf8"
+            try {
+                fs.writeFileSync(
+                    USERS_FILE,
+                    "[]",
+                    {
+                        encoding: "utf8",
+                        flag: "wx"
+                    }
+                );
+            } catch (error) {
+                // Եթե զուգահեռ գործընթացն արդեն ստեղծել է ֆայլը։
+                if (error.code !== "EEXIST") {
+                    throw error;
+                }
+            }
+        }
+
+        // Կարդում ենք օգտատերերի տվյալները։
+        const rawData = fs.readFileSync(
+            USERS_FILE,
+            "utf8"
+        );
+
+        const users = JSON.parse(rawData);
+
+        // Ստուգում ենք հիմնական կառուցվածքը։
+        if (!Array.isArray(users)) {
+            throw new Error(
+                "INVALID_USERS_DATABASE_STRUCTURE"
             );
         }
 
-        const users = JSON.parse(
-            fs.readFileSync(USERS_FILE, "utf8")
-        );
+        const userIds = new Set();
+        const userEmails = new Set();
 
-        return Array.isArray(users) ? users : [];
+        // Ստուգում ենք յուրաքանչյուր օգտատիրոջ տվյալները։
+        for (const user of users) {
+            if (
+                !user ||
+                typeof user !== "object" ||
+                Array.isArray(user) ||
+
+                typeof user.id !== "string" ||
+                !/^USER_\d{3,}$/.test(user.id) ||
+
+                typeof user.name !== "string" ||
+                !user.name.trim() ||
+
+                typeof user.email !== "string" ||
+                !user.email.trim() ||
+
+                typeof user.passwordSalt !== "string" ||
+                !/^[a-f0-9]{32}$/i.test(user.passwordSalt) ||
+
+                typeof user.passwordHash !== "string" ||
+                !/^[a-f0-9]{128}$/i.test(user.passwordHash)
+            ) {
+                throw new Error("INVALID_USER_RECORD");
+            }
+
+            const normalizedEmail = user.email
+                .trim()
+                .toLowerCase();
+
+            // Ստուգում ենք կրկնվող ID-ները։
+            if (userIds.has(user.id)) {
+                throw new Error("DUPLICATE_USER_ID");
+            }
+
+            // Ստուգում ենք կրկնվող email-ները։
+            if (userEmails.has(normalizedEmail)) {
+                throw new Error("DUPLICATE_USER_EMAIL");
+            }
+
+            userIds.add(user.id);
+            userEmails.add(normalizedEmail);
+        }
+
+        return users;
 
     } catch (error) {
-        console.error("USERS LOAD ERROR:", error.message);
+        console.error(
+            "USERS LOAD ERROR:",
+            error.message
+        );
+
         throw new Error("USERS_DATABASE_ERROR");
     }
 }
 
 function saveUsers(users) {
-    const tempFile = USERS_FILE + ".tmp";
+    let tempFile = null;
 
     try {
-        fs.writeFileSync(
-            tempFile,
-            JSON.stringify(users, null, 4),
-            "utf8"
+        // Ստուգում ենք մուտքային տվյալները։
+        if (!Array.isArray(users)) {
+            throw new Error("INVALID_USERS_DATA");
+        }
+
+        // Ստուգում ենք տվյալների կառուցվածքը։
+        const userIds = new Set();
+        const userEmails = new Set();
+
+        for (const user of users) {
+            if (
+                !user ||
+                typeof user !== "object" ||
+                Array.isArray(user) ||
+                typeof user.id !== "string" ||
+                !/^USER_\d{3,}$/.test(user.id) ||
+                typeof user.name !== "string" ||
+                !user.name.trim() ||
+                typeof user.email !== "string" ||
+                !user.email.trim() ||
+                typeof user.passwordSalt !== "string" ||
+                !/^[a-f0-9]{32}$/i.test(user.passwordSalt) ||
+                typeof user.passwordHash !== "string" ||
+                !/^[a-f0-9]{128}$/i.test(user.passwordHash)
+            ) {
+                throw new Error("INVALID_USER_RECORD");
+            }
+
+            const email = user.email.trim().toLowerCase();
+
+            if (
+                userIds.has(user.id) ||
+                userEmails.has(email)
+            ) {
+                throw new Error("DUPLICATE_USER_RECORD");
+            }
+
+            userIds.add(user.id);
+            userEmails.add(email);
+        }
+
+        // Ստեղծում ենք USERS_FILE-ի պանակը։
+        fs.mkdirSync(path.dirname(USERS_FILE), {
+            recursive: true
+        });
+
+        // Յուրաքանչյուր պահպանման համար ստեղծում ենք եզակի ժամանակավոր ֆայլ։
+        tempFile = path.join(
+            path.dirname(USERS_FILE),
+            `${path.basename(USERS_FILE)}.${process.pid}.${crypto.randomBytes(8).toString("hex")}.tmp`
         );
 
-        JSON.parse(fs.readFileSync(tempFile, "utf8"));
+        const serializedData = JSON.stringify(
+            users,
+            null,
+            4
+        );
 
-        fs.renameSync(tempFile, USERS_FILE);
+        // Ստեղծում ենք ժամանակավոր ֆայլը՝ առանց վերագրելու։
+        fs.writeFileSync(
+            tempFile,
+            serializedData,
+            {
+                encoding: "utf8",
+                flag: "wx"
+            }
+        );
+
+        // Ստուգում ենք պահպանված JSON-ը։
+        const savedData = JSON.parse(
+            fs.readFileSync(tempFile, "utf8")
+        );
+
+        if (!Array.isArray(savedData)) {
+            throw new Error("INVALID_TEMP_USERS_DATABASE");
+        }
+
+        // Փոխարինում ենք հիմնական ֆայլը։
+        fs.renameSync(
+            tempFile,
+            USERS_FILE
+        );
+
+        tempFile = null;
 
         return true;
 
     } catch (error) {
-        console.error("USERS SAVE ERROR:", error.message);
+        console.error(
+            "USERS SAVE ERROR:",
+            error.message
+        );
+
         return false;
 
     } finally {
-        try {
-            if (fs.existsSync(tempFile)) {
-                fs.unlinkSync(tempFile);
+        if (tempFile) {
+            try {
+                if (fs.existsSync(tempFile)) {
+                    fs.unlinkSync(tempFile);
+                }
+            } catch (cleanupError) {
+                console.error(
+                    "USERS TEMP CLEANUP ERROR:",
+                    cleanupError.message
+                );
             }
-        } catch {}
+        }
     }
 }
 
@@ -533,111 +691,201 @@ function verifyPassword(password, user) {
 
   
 function createNewUser(name, email, password) {
-    fs.mkdirSync(USERS_DIR, { recursive: true });
+    // Ստուգում ենք մուտքային տվյալները։
+    if (
+        typeof name !== "string" ||
+        typeof email !== "string" ||
+        typeof password !== "string"
+    ) {
+        throw new Error("INVALID_USER_DATA");
+    }
+
+    const cleanName = name.trim();
+    const normalizedEmail = email.trim().toLowerCase();
+
+    if (
+        cleanName.length < 2 ||
+        cleanName.length > 50
+    ) {
+        throw new Error("INVALID_NAME");
+    }
+
+    if (
+        !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)
+    ) {
+        throw new Error("INVALID_EMAIL");
+    }
+
+    if (
+        password.length < 8 ||
+        password.length > 128
+    ) {
+        throw new Error("INVALID_PASSWORD");
+    }
+
+    // Ստեղծում ենք օգտատերերի հիմնական պանակը։
+    fs.mkdirSync(USERS_DIR, {
+        recursive: true
+    });
 
     const users = loadUsers();
 
-    const normalizedEmail = email.trim().toLowerCase();
-
-    // Կրկնակի էլեկտրոնային փոստի արգելում
+    // Ստուգում ենք՝ արդյոք էլեկտրոնային փոստն արդեն գրանցված է։
     const emailExists = users.some(
         user =>
             typeof user.email === "string" &&
-            user.email.toLowerCase() === normalizedEmail
+            user.email.trim().toLowerCase() === normalizedEmail
     );
 
     if (emailExists) {
         throw new Error("EMAIL_ALREADY_REGISTERED");
     }
 
-    const numbers = users.map(user => {
+    // Գտնում ենք հաջորդ օգտատիրոջ համարը։
+    let nextNumber = users.reduce((max, user) => {
         const match = /^USER_(\d+)$/.exec(user.id || "");
-        return match ? Number(match[1]) : 0;
-    });
 
-    const nextNumber = Math.max(0, ...numbers) + 1;
+        return match
+            ? Math.max(max, Number(match[1]))
+            : max;
+    }, 0) + 1;
 
-    const userId = "USER_" +
-        String(nextNumber).padStart(3, "0");
+    // Ստեղծում ենք եզակի օգտատիրոջ պանակը։
+    let userId;
+    let userDirectory;
+    let directoryCreated = false;
 
-    const userDirectory = path.join(USERS_DIR, userId);
+    while (!directoryCreated) {
+        if (!Number.isSafeInteger(nextNumber)) {
+            throw new Error("USER_ID_LIMIT_REACHED");
+        }
 
-    // Օգտագործում ենք առկա պանակը, եթե այն արդեն կա։
-    fs.mkdirSync(userDirectory, {
-        recursive: true
-    });
+        userId = "USER_" +
+            String(nextNumber).padStart(3, "0");
 
-    const memoryFile = path.join(
-        userDirectory,
-        "memory.json"
-    );
+        userDirectory = path.join(
+            USERS_DIR,
+            userId
+        );
 
-    const backupFile = memoryFile + ".backup";
+        try {
+            // Առանց recursive-ի․ գոյություն ունեցող պանակը չենք օգտագործում։
+            fs.mkdirSync(userDirectory);
 
-    const historyFile = path.join(
-        userDirectory,
-        "history.json"
-    );
+            directoryCreated = true;
 
-    const emptyMemory = {
-        facts: [],
-        preferences: [],
-        interests: [],
-        devices: [],
-        goals: [],
-        projects: [],
-        games: [],
-        tasks: [],
-        user_name: name.trim(),
-        youtube_channel: "",
-        pending_memory: null
-    };
+        } catch (error) {
+            if (error.code === "EEXIST") {
+                nextNumber++;
+                continue;
+            }
 
-    // Ստեղծում ենք հիշողությունը միայն այն դեպքում,
-    // երբ ֆայլը գոյություն չունի։
-    if (!fs.existsSync(memoryFile)) {
+            throw error;
+        }
+    }
+
+    try {
+        const memoryFile = path.join(
+            userDirectory,
+            "memory.json"
+        );
+
+        const backupFile = memoryFile + ".backup";
+
+        const historyFile = path.join(
+            userDirectory,
+            "history.json"
+        );
+
+        // Ստեղծում ենք նոր օգտատիրոջ դատարկ հիշողությունը։
+        const emptyMemory = {
+            facts: [],
+            preferences: [],
+            interests: [],
+            devices: [],
+            goals: [],
+            projects: [],
+            games: [],
+            tasks: [],
+            user_name: cleanName,
+            youtube_channel: "",
+            pending_memory: null
+        };
+
+        const memoryData = JSON.stringify(
+            emptyMemory,
+            null,
+            4
+        );
+
+        // Ստեղծում ենք memory.json-ը՝ առանց վերագրելու։
         fs.writeFileSync(
             memoryFile,
-            JSON.stringify(emptyMemory, null, 4),
-            "utf8"
+            memoryData,
+            {
+                encoding: "utf8",
+                flag: "wx"
+            }
         );
-    } else {
-        JSON.parse(fs.readFileSync(memoryFile, "utf8"));
+
+        // Ստեղծում ենք սկզբնական backup-ը։
+        fs.copyFileSync(
+            memoryFile,
+            backupFile,
+            fs.constants.COPYFILE_EXCL
+        );
+
+        // Ստեղծում ենք դատարկ պատմությունը։
+        fs.writeFileSync(
+            historyFile,
+            "[]",
+            {
+                encoding: "utf8",
+                flag: "wx"
+            }
+        );
+
+        // Գեներացնում ենք գաղտնաբառի անվտանգ տվյալները։
+        const credentials = hashPassword(password);
+
+        const user = {
+            id: userId,
+            name: cleanName,
+            email: normalizedEmail,
+            ...credentials,
+            createdAt: new Date().toISOString()
+        };
+
+        // Ավելացնում ենք նոր օգտատիրոջը։
+        users.push(user);
+
+        // Պահպանում ենք օգտատերերի տվյալների բազան։
+        if (!saveUsers(users)) {
+            throw new Error("USERS_DATABASE_SAVE_FAILED");
+        }
+
+        console.log("NEW ZENIX USER:", userId);
+
+        return user;
+
+    } catch (error) {
+        // Սխալի դեպքում հեռացնում ենք միայն այս ֆունկցիայի ստեղծած պանակը։
+        try {
+            if (directoryCreated && fs.existsSync(userDirectory)) {
+                fs.rmSync(userDirectory, {
+                    recursive: true,
+                    force: true
+                });
+            }
+        } catch (cleanupError) {
+            console.error(
+                "NEW USER DIRECTORY CLEANUP ERROR:",
+                cleanupError.message
+            );
+        }
+
+        throw error;
     }
-
-    // Ստեղծում ենք backup միայն բացակայության դեպքում։
-    if (!fs.existsSync(backupFile)) {
-        fs.copyFileSync(memoryFile, backupFile);
-    } else {
-        JSON.parse(fs.readFileSync(backupFile, "utf8"));
-    }
-
-    // Պատմությունը նույնպես չենք վերագրում։
-    if (!fs.existsSync(historyFile)) {
-        fs.writeFileSync(historyFile, "[]", "utf8");
-    } else {
-        JSON.parse(fs.readFileSync(historyFile, "utf8"));
-    }
-
-    const credentials = hashPassword(password);
-
-    const user = {
-        id: userId,
-        name: name.trim(),
-        email: normalizedEmail,
-        ...credentials,
-        createdAt: new Date().toISOString()
-    };
-
-    users.push(user);
-
-    if (!saveUsers(users)) {
-        throw new Error("USERS_DATABASE_SAVE_FAILED");
-    }
-
-    console.log("NEW ZENIX USER:", userId);
-
-    return user;
 }
 
 
@@ -1342,22 +1590,6 @@ function createMemoryBackup() {
    SAVE MEMORY
 ===================================================== */
 
-function ensureMemoryDirectory() {
-    try {
-        fs.mkdirSync(MEMORY_DIR, {
-            recursive: true
-        });
-
-        return fs.statSync(MEMORY_DIR).isDirectory();
-    } catch (error) {
-        console.error(
-            "MEMORY DIRECTORY ERROR:",
-            error.message
-        );
-
-        return false;
-    }
-}
 
 function saveMemory(memory) {
   
@@ -3561,7 +3793,16 @@ ${memory.devices.join("\n")}
 Մի ասա, որ հիշողություն ես պահպանել, եթե այն իրականում չի պահպանվել։
 `;
 
-    const response = await fetch(
+
+
+let response;
+let data;
+
+const maxRetries = 2;
+
+for (let attempt = 0; attempt <= maxRetries; attempt++) {
+
+    response = await fetch(
         GEMINI_URL + encodeURIComponent(apiKey),
         {
             method: "POST",
@@ -3584,23 +3825,36 @@ ${memory.devices.join("\n")}
 
     const responseText = await response.text();
 
-    let data;
-
     try {
         data = JSON.parse(responseText);
     } catch {
         console.error("GEMINI NON-JSON:", responseText);
-
         throw new Error("Gemini returned invalid JSON.");
     }
 
-    if (!response.ok) {
+    if (response.ok) {
+        break;
+    }
+
+    const temporaryError = [500, 502, 503, 504]
+        .includes(response.status);
+
+    if (!temporaryError || attempt === maxRetries) {
         console.error("GEMINI ERROR:", data);
 
         throw new Error(
             data.error?.message || "Gemini API error"
         );
     }
+
+    console.log(
+        `GEMINI RETRY ${attempt + 1}/${maxRetries}`
+    );
+
+    await new Promise(resolve =>
+        setTimeout(resolve, 1500 * (attempt + 1))
+    );
+}
 
     const answer = data.candidates?.[0]?.content?.parts
         ?.map(part => part.text || "")
@@ -3929,7 +4183,8 @@ app.get(
     userMemoryContext,
     (req, res) => {
         try {
-const history = loadUserHistory(req.user.userId);
+            const memory = loadMemory();
+
             return res.json({
                 userId: req.user.userId,
                 summary: getMemorySummary(memory),
@@ -3978,8 +4233,7 @@ app.get(
     userMemoryContext,
     (req, res) => {
         try {
-            const history = loadUserHistory();
-
+const history = loadUserHistory(req.user.userId);
             return res.json({
                 success: true,
                 history
@@ -3999,76 +4253,6 @@ app.get(
     }
 );
 
- // ==========================================
-// ZENIX CREATE NEW CHAT API
-// ==========================================
-
-app.post(
-    "/api/chats",
-    requireAuth,
-    userMemoryContext,
-    (req, res) => {
-        let chatFile = null;
-
-        try {
-            const chats = loadUserChats();
-
-            const chatId = makeChatId();
-            const now = new Date().toISOString();
-
-            const newChat = {
-                id: chatId,
-                title: "Նոր զրույց",
-                createdAt: now,
-                updatedAt: now
-            };
-
-            const paths = getUserChatsPaths();
-
-            chatFile = path.join(
-                paths.chatsDirectory,
-                chatId + ".json"
-            );
-
-            fs.writeFileSync(
-                chatFile,
-                "[]",
-                "utf8"
-            );
-
-            chats.unshift(newChat);
-
-            if (!saveUserChats(chats)) {
-                fs.unlinkSync(chatFile);
-
-                return res.status(500).json({
-                    success: false,
-                    error: "CHAT_CREATE_FAILED"
-                });
-            }
-
-            return res.json({
-                success: true,
-                chat: newChat
-            });
-
-        } catch (error) {
-            if (chatFile && fs.existsSync(chatFile)) {
-                fs.unlinkSync(chatFile);
-            }
-
-            console.error(
-                "ZENIX CREATE CHAT ERROR:",
-                error.message
-            );
-
-            return res.status(500).json({
-                success: false,
-                error: "CHAT_CREATE_FAILED"
-            });
-        }
-    }
-);
 
 // ==========================================
 // ZENIX CREATE NEW CHAT
