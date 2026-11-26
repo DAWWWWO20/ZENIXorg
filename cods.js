@@ -1,4 +1,4 @@
-
+﻿
 // ==========================================
 // ZENIX CONFIG
 // ==========================================
@@ -34,7 +34,7 @@ let mediaRecorder = null;
 let recordedChunks = [];
 let listening = false;
 let starting = false;
-
+let micStartCancelled = false;
 
 // ==========================================
 // SESSION ID
@@ -56,7 +56,7 @@ function makeSessionId() {
 
 let fallbackSessionId = null;
 
-function getSessionId() {
+    function getSessionId() {
     try {
         const saved = localStorage.getItem("zenix_session");
 
@@ -260,20 +260,25 @@ function showAuthMessage(message, isError = false) {
     authMessage.style.fontSize = "13px";
     authMessage.style.textAlign = "center";
 }
-
 function setAuthLoading(button, loading, originalText) {
     if (!button) return;
 
-    button.disabled = loading;
-    button.style.opacity = loading ? "0.6" : "1";
-    button.style.cursor = loading ? "wait" : "pointer";
+    const isLoading = Boolean(loading);
+
+    button.disabled = isLoading;
+    button.style.opacity = isLoading ? "0.6" : "1";
+    button.style.cursor = isLoading ? "wait" : "pointer";
+
+    button.setAttribute("aria-busy", String(isLoading));
 
     const textElement = button.querySelector(".button-text");
 
     if (textElement) {
-        textElement.textContent = loading
-            ? "Խնդրում եմ սպասիր..."
-            : originalText;
+        if (isLoading) {
+            textElement.textContent = "Խնդրում եմ սպասիր...";
+        } else if (typeof originalText === "string") {
+            textElement.textContent = originalText;
+        }
     }
 }
 async function authRequest(endpoint, payload) {
@@ -317,6 +322,7 @@ async function authRequest(endpoint, payload) {
 
 // REGISTER
 
+ 
 async function registerUser() {
     if (!registerForm || !registerButton) return;
 
@@ -399,13 +405,8 @@ async function loginUser() {
     }
 }
 
-if (loginButton) {
-    loginButton.addEventListener("click", loginUser);
-}
 
-if (registerButton) {
-    registerButton.addEventListener("click", registerUser);
-}
+
 
 if (loginForm) {
     loginForm.addEventListener("submit", event => {
@@ -441,27 +442,50 @@ if (authMessage) {
 // ==========================================
 
 function startTalking() {
+    if (talking) return;
+
     talking = true;
 
-    if (mouth) mouth.classList.add("talking");
-    if (robot) robot.classList.add("talking");
+    try {
+        mouth?.classList?.add("talking");
+        robot?.classList?.add("talking");
+    } catch (error) {
+        console.warn("ZENIX START TALKING ERROR:", error);
+    }
 }
 
 function stopTalking() {
     talking = false;
 
-    if (mouth) mouth.classList.remove("talking");
-    if (robot) robot.classList.remove("talking");
+    try {
+        mouth?.classList?.remove("talking");
+        robot?.classList?.remove("talking");
+    } catch (error) {
+        console.warn("ZENIX STOP TALKING ERROR:", error);
+    }
 }
-
 function robotTalk() {
-    startTalking();
+    try {
+        startTalking();
 
-    setTimeout(() => {
-        stopTalking();
-    }, 1800);
+        if (robotTalkTimer) {
+            clearTimeout(robotTalkTimer);
+        }
+
+        robotTalkTimer = setTimeout(() => {
+            robotTalkTimer = null;
+
+            try {
+                stopTalking();
+            } catch (error) {
+                console.warn("ZENIX STOP TALKING ERROR:", error);
+            }
+        }, 1800);
+
+    } catch (error) {
+        console.warn("ZENIX ROBOT TALK ERROR:", error);
+    }
 }
-
 function waveRobot() {
     if (!robot) return;
 
@@ -478,10 +502,15 @@ function waveRobot() {
 
 
 function checkGreeting(text) {
+    if (typeof text !== "string" || !text.trim()) {
+        return false;
+    }
+
     const normalized = text
         .toLowerCase()
         .normalize("NFC")
-        .replace(/[!?.,՝։՞՜]/g, "")
+        .replace(/[!?.,՝։՞՜]/g, " ")
+        .replace(/\s+/g, " ")
         .trim();
 
     const greetings = [
@@ -548,8 +577,35 @@ loading.textContent = "ZENIX-ը մտածում է... 💙";
 // ==========================================
 
 function base64ToWav(base64, sampleRate = 24000) {
-    const binary = atob(base64);
+    if (typeof base64 !== "string" || !base64.trim()) {
+        throw new Error("INVALID_AUDIO_BASE64");
+    }
+
+    if (
+        !Number.isInteger(sampleRate) ||
+        sampleRate < 1 ||
+        sampleRate > 384000
+    ) {
+        throw new Error("INVALID_AUDIO_SAMPLE_RATE");
+    }
+
+    let binary;
+
+    try {
+        binary = atob(base64.replace(/\s/g, ""));
+    } catch (error) {
+        throw new Error("INVALID_AUDIO_BASE64");
+    }
+
     const length = binary.length;
+
+    if (length === 0 || length % 2 !== 0) {
+        throw new Error("INVALID_PCM_AUDIO_LENGTH");
+    }
+
+    if (length > 0xFFFFFFFF - 36) {
+        throw new Error("AUDIO_FILE_TOO_LARGE");
+    }
 
     const buffer = new ArrayBuffer(44 + length);
     const view = new DataView(buffer);
@@ -578,7 +634,9 @@ function base64ToWav(base64, sampleRate = 24000) {
         view.setUint8(44 + i, binary.charCodeAt(i));
     }
 
-    return new Blob([buffer], { type: "audio/wav" });
+    return new Blob([buffer], {
+        type: "audio/wav"
+    });
 }
 
 
@@ -588,6 +646,11 @@ function base64ToWav(base64, sampleRate = 24000) {
 
 function speakWithBrowser(text) {
     return new Promise((resolve, reject) => {
+        if (typeof text !== "string" || !text.trim()) {
+            reject(new Error("INVALID_SPEECH_TEXT"));
+            return;
+        }
+
         if (
             !("speechSynthesis" in window) ||
             typeof SpeechSynthesisUtterance === "undefined"
@@ -596,53 +659,79 @@ function speakWithBrowser(text) {
             return;
         }
 
-        window.speechSynthesis.cancel();
+        const synthesis = window.speechSynthesis;
 
-        const utterance = new SpeechSynthesisUtterance(text);
+        try {
+            synthesis.cancel();
 
-        const currentLanguage =
-            window.ZENIX_LANGUAGE?.getCurrentLanguage() || "hy";
+            const utterance = new SpeechSynthesisUtterance(text);
 
-        const voiceLanguages = {
-            hy: "hy-AM",
-            en: "en-US",
-            ru: "ru-RU",
-            es: "es-ES",
-            fr: "fr-FR"
-        };
+            const currentLanguage =
+                window.ZENIX_LANGUAGE?.getCurrentLanguage() || "hy";
 
-        const selectedLanguage =
-            voiceLanguages[currentLanguage] || "hy-AM";
+            const voiceLanguages = {
+                hy: "hy-AM",
+                en: "en-US",
+                ru: "ru-RU",
+                es: "es-ES",
+                fr: "fr-FR"
+            };
 
-        utterance.lang = selectedLanguage;
+            const selectedLanguage =
+                voiceLanguages[currentLanguage] || "hy-AM";
 
-        const voices = window.speechSynthesis.getVoices();
+            utterance.lang = selectedLanguage;
 
-        const selectedVoice = voices.find(voice =>
-            voice.lang.toLowerCase() === selectedLanguage.toLowerCase()
-        ) || voices.find(voice =>
-            voice.lang.toLowerCase().startsWith(currentLanguage)
-        );
+            const selectVoice = () => {
+                const voices = synthesis.getVoices();
 
-        if (selectedVoice) {
-            utterance.voice = selectedVoice;
+                return voices.find(voice =>
+                    voice.lang.toLowerCase() === selectedLanguage.toLowerCase()
+                ) || voices.find(voice =>
+                    voice.lang.toLowerCase().startsWith(currentLanguage)
+                );
+            };
+
+            const selectedVoice = selectVoice();
+
+            if (selectedVoice) {
+                utterance.voice = selectedVoice;
+            }
+
+            let completed = false;
+
+            const finish = (error = null) => {
+                if (completed) return;
+
+                completed = true;
+
+                stopTalking();
+
+                if (error) {
+                    reject(error);
+                } else {
+                    resolve();
+                }
+            };
+
+            utterance.onstart = () => {
+                startTalking();
+            };
+
+            utterance.onend = () => {
+                finish();
+            };
+
+            utterance.onerror = event => {
+                finish(new Error(event.error || "Browser voice error"));
+            };
+
+            synthesis.speak(utterance);
+
+        } catch (error) {
+            stopTalking();
+            reject(error);
         }
-
-        utterance.onstart = () => {
-            startTalking();
-        };
-
-        utterance.onend = () => {
-            stopTalking();
-            resolve();
-        };
-
-        utterance.onerror = event => {
-            stopTalking();
-            reject(new Error(event.error || "Browser voice error"));
-        };
-
-        window.speechSynthesis.speak(utterance);
     });
 }
 
@@ -651,10 +740,16 @@ function speakWithBrowser(text) {
 // MAIN ZENIX VOICE
 // ==========================================
 
+
 async function speakReply(text) {
     let audioUrl = null;
+    let audio = null;
 
     try {
+        if (typeof text !== "string" || !text.trim()) {
+            throw new Error("INVALID_SPEECH_TEXT");
+        }
+
         const response = await fetch(API_URL + "/api/speech", {
             method: "POST",
             headers: {
@@ -663,17 +758,34 @@ async function speakReply(text) {
             body: JSON.stringify({ text })
         });
 
-        const data = await response.json();
+        const responseText = await response.text();
+
+        let data;
+
+        try {
+            data = responseText
+                ? JSON.parse(responseText)
+                : null;
+        } catch (error) {
+            throw new Error("SPEECH_INVALID_JSON");
+        }
 
         if (!response.ok) {
-            throw new Error(data.error || "Speech API error");
+            throw new Error(
+                data?.error || "Speech API error"
+            );
         }
 
-        if (!data.audio) {
-            throw new Error("No audio received.");
+        if (
+            !data ||
+            typeof data.audio !== "string" ||
+            !data.audio.trim()
+        ) {
+            throw new Error("INVALID_AUDIO_DATA");
         }
 
-        const mimeType = String(data.mimeType || "").toLowerCase();
+        const mimeType = String(data.mimeType || "")
+            .toLowerCase();
 
         let audioBlob;
 
@@ -685,34 +797,66 @@ async function speakReply(text) {
                 bytes[i] = binary.charCodeAt(i);
             }
 
-            audioBlob = new Blob([bytes], { type: "audio/wav" });
+            audioBlob = new Blob([bytes], {
+                type: "audio/wav"
+            });
 
         } else {
             const match = mimeType.match(/rate=(\d+)/i);
-            const sampleRate = match ? Number(match[1]) : 24000;
 
-            audioBlob = base64ToWav(data.audio, sampleRate);
+            const sampleRate = match
+                ? Number(match[1])
+                : 24000;
+
+            audioBlob = base64ToWav(
+                data.audio,
+                sampleRate
+            );
+        }
+
+        if (!audioBlob || !audioBlob.size) {
+            throw new Error("INVALID_AUDIO_BLOB");
         }
 
         audioUrl = URL.createObjectURL(audioBlob);
-
-        const audio = new Audio(audioUrl);
-
-        startTalking();
+        audio = new Audio(audioUrl);
 
         await new Promise((resolve, reject) => {
-            audio.onended = resolve;
+            let completed = false;
 
-            audio.onerror = () => {
-                reject(new Error("Audio playback failed."));
+            const finish = (error = null) => {
+                if (completed) return;
+
+                completed = true;
+
+                audio.onended = null;
+                audio.onerror = null;
+
+                if (error) {
+                    reject(error);
+                } else {
+                    resolve();
+                }
             };
 
-            audio.play().catch(reject);
+            audio.onended = () => {
+                finish();
+            };
+
+            audio.onerror = () => {
+                finish(new Error("Audio playback failed."));
+            };
+
+            audio.play()
+                .then(() => {
+                    startTalking();
+                })
+                .catch(error => {
+                    finish(error);
+                });
         });
 
     } catch (error) {
-        stopTalking();
-
         console.warn(
             "GEMINI VOICE UNAVAILABLE. USING BROWSER VOICE:",
             error.message
@@ -722,14 +866,24 @@ async function speakReply(text) {
             await speakWithBrowser(text);
 
         } catch (browserError) {
-            stopTalking();
+            console.error(
+                "BROWSER VOICE ERROR:",
+                browserError
+            );
 
-            console.error("BROWSER VOICE ERROR:", browserError);
-
-            addMessage("ZENIX-Х« Х±ХЎХµХ¶ХЁ Х°Х«ХґХЎ ХЎХ¶Х°ХЎХЅХЎХ¶ХҐХ¬Х« Х§Ц‰ вќ¤пёЏ");
+            addMessage(
+                "ZENIX-ը չկարողացավ խոսել։ Փորձիր կրկին 💙"
+            );
         }
 
     } finally {
+        stopTalking();
+
+        if (audio) {
+            audio.onended = null;
+            audio.onerror = null;
+        }
+
         if (audioUrl) {
             URL.revokeObjectURL(audioUrl);
         }
@@ -759,63 +913,174 @@ async function sendMessage() {
         return;
     }
 
-    if (checkGreeting(text)) {
-        waveRobot();
-    }
-
     busy = true;
-    input.value = "";
-
-    addMessage(text, "user");
-
-    history.push({
-        role: "user",
-        text
-    });
-
-    const loading = showLoading();
+    let loading = null;
 
     if (sendBtn) {
         sendBtn.disabled = true;
     }
 
     try {
-        const response = await fetch(API_URL + "/api/chat", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "Authorization": "Bearer " + token
-            },
-            body: JSON.stringify({
-                sessionId,
-                history
-            })
-        });
+        try {
+            if (checkGreeting(text)) {
+                waveRobot();
+            }
+        } catch (error) {
+            console.warn("ZENIX GREETING ERROR:", error);
+        }
 
-        const data = await response.json();
+        // Պատրաստում ենք հարցման պատմությունը
+        // առանց հիմնական history-ն փոխելու։
+        const requestHistory = [
+            ...history,
+            {
+                role: "user",
+                text
+            }
+        ];
+
+        loading = showLoading();
+
+  
+
+let response = await fetch(API_URL + "/api/chat", {
+    method: "POST",
+    headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer " + token
+    },
+    body: JSON.stringify({
+        sessionId,
+        history: requestHistory
+    })
+});
+
+// Եթե զրույցը սերվերում գոյություն չունի՝ ստեղծում ենք նորը։
+if (response.status === 404) {
+    const errorText = await response.text();
+
+    let errorData = null;
+
+    try {
+        errorData = errorText ? JSON.parse(errorText) : null;
+    } catch {
+        throw new Error("SERVER_INVALID_JSON");
+    }
+
+    if (errorData?.error !== "CHAT_NOT_FOUND") {
+        throw new Error(
+            errorData?.error || "ZENIX CHAT ERROR"
+        );
+    }
+
+    // Ստեղծում ենք նոր զրույց սերվերում։
+    const createResponse = await fetch(API_URL + "/api/chats", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": "Bearer " + token
+        }
+    });
+
+    if (createResponse.status === 401) {
+        logoutUser();
+        return;
+    }
+
+    const createText = await createResponse.text();
+
+    let createData = null;
+
+    try {
+        createData = createText
+            ? JSON.parse(createText)
+            : null;
+    } catch {
+        throw new Error("SERVER_INVALID_JSON");
+    }
+
+    if (
+        !createResponse.ok ||
+        !createData?.success ||
+        !createData?.chat?.id
+    ) {
+        throw new Error(
+            createData?.error || "CHAT_CREATE_FAILED"
+        );
+    }
+
+    // Պահպանում ենք սերվերի ստեղծած իրական ID-ն։
+    sessionId = createData.chat.id;
+
+    localStorage.setItem("zenix_session", sessionId);
+
+    // Կրկին ուղարկում ենք նույն հաղորդագրությունը։
+    response = await fetch(API_URL + "/api/chat", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": "Bearer " + token
+        },
+        body: JSON.stringify({
+            sessionId,
+            history: requestHistory
+        })
+    });
+}
+
 
         if (response.status === 401) {
             logoutUser();
             return;
         }
 
+        const responseText = await response.text();
+
+        let data = null;
+
+        try {
+            data = responseText
+                ? JSON.parse(responseText)
+                : null;
+        } catch (error) {
+            throw new Error("SERVER_INVALID_JSON");
+        }
+
         if (!response.ok) {
-            throw new Error(data.error || "ZENIX CHAT ERROR");
+            throw new Error(
+                data?.error || "ZENIX CHAT ERROR"
+            );
         }
 
         if (
+            !data ||
             typeof data.reply !== "string" ||
             !data.reply.trim()
         ) {
-            throw new Error("ZENIX-ХЁ Х¤ХЎХїХЎЦЂХЇ ХєХЎХїХЎХЅХ­ХЎХ¶ Х§ ХѕХҐЦЂХЎХ¤ХЎЦЂХ±ЦЂХҐХ¬Ц‰");
+            throw new Error("INVALID_CHAT_REPLY");
         }
+
+        // Միայն հաջող պատասխանից հետո
+        // պահպանում ենք հաղորդագրությունները։
+        history.push({
+            role: "user",
+            text
+        });
 
         history.push({
             role: "assistant",
             text: data.reply
         });
 
+        // Ցուցադրում ենք հաղորդագրությունները։
+        addMessage(text, "user");
         addMessage(data.reply, "bot");
+
+        // Մաքրում ենք դաշտը միայն այն դեպքում,
+        // եթե օգտատերը նոր տեքստ չի մուտքագրել։
+        if (input.value.trim() === text) {
+            input.value = "";
+        }
 
         robotTalk();
 
@@ -823,11 +1088,13 @@ async function sendMessage() {
         console.error("ZENIX CHAT ERROR:", error);
 
         addMessage(
-            "Х†ХҐЦЂХёХІХёЦ‚Х©ХµХёЦ‚Х¶, ХЇХЎХєХ« ХЄХЎХґХЎХ¶ХЎХЇ ХЅХ­ХЎХ¬ ХЎХјХЎХ»ХЎЦЃХЎХѕЦ‰ Х“ХёЦЂХ±Х«ЦЂ ХЇЦЂХЇХ«Х¶Ц‰"
+            "Կներես, հաղորդագրությունն ուղարկելիս սխալ առաջացավ։ Փորձիր կրկին։"
         );
 
     } finally {
-        if (loading) loading.remove();
+        if (loading) {
+            loading.remove();
+        }
 
         busy = false;
 
@@ -875,18 +1142,26 @@ if (input) {
 // MICROPHONE
 // ==========================================
 
+// ==========================================
+// MICROPHONE
+// ==========================================
+
 async function startListening() {
-    if (listening || starting) return;
+    if (starting || listening) {
+        return;
+    }
 
     if (
-        !navigator.mediaDevices?.getUserMedia ||
-        !window.MediaRecorder
+        !navigator.mediaDevices ||
+        !navigator.mediaDevices.getUserMedia ||
+        typeof MediaRecorder === "undefined"
     ) {
-        addMessage("Х”Хё Х¤Х«ХїХЎЦЂХЇХ«Х№ХЁ Х№Х« ХЎХ»ХЎХЇЦЃХёЦ‚Хґ Х±ХЎХµХ¶ХЎХЈЦЂХёЦ‚Х©ХµХЎХ¶ХЁЦ‰");
+        addMessage("Քո դիտարկիչը չի աջակցում ձայնագրությանը։");
         return;
     }
 
     starting = true;
+    micStartCancelled = false;
 
     let stream = null;
 
@@ -894,6 +1169,12 @@ async function startListening() {
         stream = await navigator.mediaDevices.getUserMedia({
             audio: true
         });
+
+        // Եթե օգտատերը չեղարկել է միացումը։
+        if (micStartCancelled) {
+            stream.getTracks().forEach(track => track.stop());
+            return;
+        }
 
         recordedChunks = [];
 
@@ -903,81 +1184,177 @@ async function startListening() {
             "audio/mp4"
         ];
 
-        const mimeType = mimeTypes.find(type =>
-            MediaRecorder.isTypeSupported(type)
-        );
+        let recorderOptions = {};
 
-        const recorder = mimeType
-            ? new MediaRecorder(stream, { mimeType })
-            : new MediaRecorder(stream);
+        if (typeof MediaRecorder.isTypeSupported === "function") {
+            const supportedType = mimeTypes.find(type =>
+                MediaRecorder.isTypeSupported(type)
+            );
+
+            if (supportedType) {
+                recorderOptions.mimeType = supportedType;
+            }
+        }
+
+        const recorder = new MediaRecorder(
+            stream,
+            recorderOptions
+        );
 
         mediaRecorder = recorder;
 
+        let recordingFailed = false;
+
         recorder.ondataavailable = event => {
-            if (event.data.size > 0) {
+            if (event.data && event.data.size > 0) {
                 recordedChunks.push(event.data);
             }
         };
 
-        recorder.onstop = async () => {
-            const actualMimeType = recorder.mimeType || "audio/webm";
+        recorder.onerror = event => {
+            recordingFailed = true;
 
-            const blob = new Blob(recordedChunks, {
-                type: actualMimeType
+            console.error(
+                "MEDIA RECORDER ERROR:",
+                event.error || event
+            );
+
+            addMessage(
+                "Ձայնագրության ընթացքում սխալ առաջացավ։ Խնդրում եմ կրկին փորձիր։"
+            );
+        };
+
+        recorder.onstop = async () => {
+            const audioBlob = new Blob(recordedChunks, {
+                type: recorder.mimeType || "audio/webm"
             });
+
+            recordedChunks = [];
 
             stream.getTracks().forEach(track => track.stop());
 
-            await sendAudioForTranscription(blob, actualMimeType);
+            if (mediaRecorder === recorder) {
+                mediaRecorder = null;
+            }
+
+            listening = false;
+
+            if (voiceBtn) {
+                voiceBtn.textContent = "🎤";
+                voiceBtn.classList.remove("listening");
+            }
+
+            if (!recordingFailed && audioBlob.size > 0) {
+                await sendAudioForTranscription(
+                    audioBlob,
+                    audioBlob.type
+                );
+            }
         };
 
         recorder.start();
 
         listening = true;
 
-        voiceBtn.textContent = "вЏ№";
-        voiceBtn.classList.add("listening");
-
-        addMessage("ФјХЅХёЦ‚Хґ ХҐХґ Ц„ХҐХ¦... ФЅХёХЅХ«ЦЂ, Х°ХҐХїХё ХЅХҐХІХґХ«ЦЂ вЏ№ вќ¤пёЏ");
+        if (voiceBtn) {
+            voiceBtn.textContent = "⏹️";
+            voiceBtn.classList.add("listening");
+        }
 
     } catch (error) {
+        console.error("START RECORDING ERROR:", error);
+
         if (stream) {
             stream.getTracks().forEach(track => track.stop());
         }
 
+        if (mediaRecorder) {
+            mediaRecorder = null;
+        }
+
         listening = false;
 
-        addMessage("Х‰Х°ХЎХ»ХёХІХѕХҐЦЃ ХґХ«ХЎЦЃХ¶ХҐХ¬ Х­ХёХЅХЎЦѓХёХІХЁЦ‰ Ф№ХёЦ‚ХµХ¬ХЎХїЦЂХ«ЦЂ ХґХёЦ‚ХїЦ„ХЁЦ‰");
+        if (voiceBtn) {
+            voiceBtn.textContent = "🎤";
+            voiceBtn.classList.remove("listening");
+        }
 
-        console.error("MICROPHONE ERROR:", error);
+        if (error.name === "NotAllowedError") {
+            addMessage(
+                "Խոսափողի օգտագործման թույլտվությունը մերժված է։ Խնդրում եմ թույլատրի՛ր այն։"
+            );
+        } else if (error.name === "NotFoundError") {
+            addMessage(
+                "Խոսափող չի հայտնաբերվել։"
+            );
+        } else if (error.name === "NotReadableError") {
+            addMessage(
+                "Խոսափողը հասանելի չէ։ Հնարավոր է՝ այն օգտագործվում է մեկ այլ ծրագրի կողմից։"
+            );
+        } else {
+            addMessage(
+                "Չհաջողվեց միացնել խոսափողը։ Խնդրում եմ կրկին փորձիր։"
+            );
+        }
 
     } finally {
         starting = false;
+        micStartCancelled = false;
     }
 }
 
 
-// STOP RECORDING
+// STOP LISTENING
 
 function stopListening() {
-    if (mediaRecorder && mediaRecorder.state !== "inactive") {
-        mediaRecorder.stop();
+    if (starting) {
+        micStartCancelled = true;
     }
 
     listening = false;
 
+    try {
+        if (
+            mediaRecorder &&
+            mediaRecorder.state !== "inactive"
+        ) {
+            mediaRecorder.stop();
+        }
+    } catch (error) {
+        console.error("STOP RECORDING ERROR:", error);
+    }
+
     if (voiceBtn) {
-        voiceBtn.textContent = "рџЋ¤";
+        voiceBtn.textContent = "🎤";
         voiceBtn.classList.remove("listening");
     }
 }
 
 
+// ==========================================
+// MICROPHONE BUTTON
+// ==========================================
+
+if (voiceBtn) {
+    voiceBtn.type = "button";
+
+    voiceBtn.addEventListener("click", () => {
+        if (listening) {
+            stopListening();
+        } else {
+            startListening();
+        }
+    });
+}
+
+// ==========================================
+
+
 // TRANSCRIPTION
 
 async function sendAudioForTranscription(blob, mimeType) {
-    if (!blob.size) {
-        addMessage("ХЃХЎХµХ¶ХЎХЈЦЂХёЦ‚Х©ХµХёЦ‚Х¶ХЁ Х¤ХЎХїХЎЦЂХЇ Х§Ц‰");
+    if (!blob || !blob.size) {
+        addMessage("Ձայնագրությունը դատարկ է։ Խնդրում եմ կրկին փորձիր։");
         return;
     }
 
@@ -985,9 +1362,21 @@ async function sendAudioForTranscription(blob, mimeType) {
 
     reader.onloadend = async () => {
         try {
+            if (reader.error) {
+                throw new Error("Չհաջողվեց կարդալ ձայնագրության ֆայլը։");
+            }
+
+            if (typeof reader.result !== "string") {
+                throw new Error("Ձայնագրության տվյալները սխալ են։");
+            }
+
             const base64 = reader.result.split(",")[1];
 
-            addMessage("ZENIX-ХЁ Х¬ХЅХёЦ‚Хґ Х§ Х±ХЎХµХ¶ХЎХЈЦЂХёЦ‚Х©ХµХёЦ‚Х¶ХЁ... рџЋ§");
+            if (!base64) {
+                throw new Error("Չհաջողվեց ստանալ ձայնագրության տվյալները։");
+            }
+
+            addMessage("ZENIX-ը մշակում է քո ձայնային հաղորդագրությունը... 🎧");
 
             const response = await fetch(API_URL + "/api/transcribe", {
                 method: "POST",
@@ -998,21 +1387,36 @@ async function sendAudioForTranscription(blob, mimeType) {
 
                 body: JSON.stringify({
                     audio: base64,
-                    mimeType
+                    mimeType: mimeType || blob.type || "audio/webm"
                 })
             });
 
-            const data = await response.json();
+            let data;
+
+            try {
+                data = await response.json();
+            } catch {
+                throw new Error("Սերվերը վերադարձրել է սխալ պատասխան։");
+            }
 
             if (!response.ok) {
-                throw new Error(data.error || "ХЃХЎХµХ¶Х« ХіХЎХ¶ХЎХ№ХґХЎХ¶ ХЅХ­ХЎХ¬");
+                throw new Error(
+                    data.error || "Ձայնի մշակման ժամանակ սխալ առաջացավ։"
+                );
             }
 
-            if (!data.text) {
-                throw new Error("Х‰Х°ХЎХ»ХёХІХѕХҐЦЃ ХіХЎХ¶ХЎХ№ХҐХ¬ Х­ХёХЅЦ„ХЁЦ‰");
+            if (
+                typeof data.text !== "string" ||
+                !data.text.trim()
+            ) {
+                throw new Error("Ձայնից խոսքը հնարավոր չեղավ ճանաչել։");
             }
 
-            input.value = data.text;
+            if (!input) {
+                throw new Error("Մուտքագրման դաշտը հասանելի չէ։");
+            }
+
+            input.value = data.text.trim();
 
             await sendMessage();
 
@@ -1027,24 +1431,28 @@ async function sendAudioForTranscription(blob, mimeType) {
                 message.includes("resource_exhausted")
             ) {
                 addMessage(
-                    "ZENIX-Х« Х±ХЎХµХ¶ХЎХµХ«Х¶ Х®ХЎХјХЎХµХёЦ‚Х©ХµХЎХ¶ ХЎХ¶ХѕХіХЎЦЂ ХЅХЎХ°ХґХЎХ¶ХЎХ№ХЎЦѓХЁ ХЅХєХЎХјХѕХҐХ¬ Х§Ц‰ вќ¤пёЏ Х“ХёЦЂХ±Х«ЦЂ ХЎХѕХҐХ¬Х« ХёЦ‚Х·Ц‰"
+                    "ZENIX-ի ձայնային ծառայության օգտագործման սահմանաչափը ժամանակավորապես սպառվել է 💙 Խնդրում եմ փորձիր ավելի ուշ։"
                 );
-
             } else {
                 addMessage(
-                    "ХЃХЎХµХ¶Х« ХіХЎХ¶ХЎХ№ХґХЎХ¶ ХЄХЎХґХЎХ¶ХЎХЇ ХЅХ­ХЎХ¬ ХїХҐХІХ« ХёЦ‚Х¶ХҐЦЃХЎХѕЦ‰ ФЅХ¶Х¤ЦЂХёЦ‚Хґ ХҐХґ ХЇЦЂХЇХ«Х¶ ЦѓХёЦЂХ±Х«ЦЂЦ‰"
+                    "Ձայնի մշակման ժամանակ սխալ առաջացավ։ Խնդրում եմ ստուգիր ինտերնետային կապը և կրկին փորձիր։"
                 );
             }
         }
     };
 
     reader.onerror = () => {
-        addMessage("Х‰Х°ХЎХ»ХёХІХѕХҐЦЃ ХЇХЎЦЂХ¤ХЎХ¬ Х±ХЎХµХ¶ХЎХЈЦЂХёЦ‚Х©ХµХёЦ‚Х¶ХЁЦ‰");
         console.error("AUDIO FILE ERROR:", reader.error);
+
+        addMessage(
+            "Չհաջողվեց կարդալ ձայնագրության ֆայլը։ Խնդրում եմ կրկին փորձիր։"
+        );
     };
 
     reader.readAsDataURL(blob);
 }
+
+
 
 
 // MICROPHONE BUTTON
